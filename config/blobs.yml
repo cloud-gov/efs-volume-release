@@ -1,20 +1,20 @@
 nfs-debs/keyutils_1.5.9-8ubuntu1_amd64.deb:
   size: 47054
-  object_id: 8bab7302-cdba-4f19-5d06-b13fdf629192
-  sha: ec2e96e73feb5215605c9f0254cad05d9cc5688a
+  object_id: e253a610-93a7-458c-6bc7-7ceea8eddb1f
+  sha: sha256:782865f7688ecc2a168f6c51e8e63f44326d73144a9df35087fd1e55e30d23db
 nfs-debs/libevent-2.0-5_2.0.21-stable-2ubuntu0.16.04.1_amd64.deb:
   size: 114014
-  object_id: 6cc3f3fd-3bdb-4f7d-5e14-349ebdbfbd86
-  sha: 57d69f44f3e058e48a7b79595d36076eb21f5942
+  object_id: 53800820-7bdc-4b81-50b6-bf098b342c75
+  sha: sha256:e1acdffde386a4da7de46166ffd199771a13498f5d4fc38d61b3fa0eba305572
 nfs-debs/libnfsidmap2_0.25-5_amd64.deb:
   size: 32182
-  object_id: 5794c909-2c88-49a8-5205-436cfafdce7b
-  sha: f28b7370542daaf81cefb44d9057fa9b3fb43064
+  object_id: b6b86ce6-94bb-4ebb-7eae-2fdb6333d681
+  sha: sha256:ed00ae6b3efc4c28068e5f984d8c69942c68502593da945b89b0045e7fcef396
 nfs-debs/nfs-common_1%3a1.2.8-9ubuntu12.1_amd64.deb:
   size: 184334
-  object_id: fe0d8266-31a4-4133-7404-8f93cbdde445
-  sha: 38f7234fade7c15ffecf4c043c877b01ead92d3d
+  object_id: fd47c6a3-90c5-45b0-7572-40d7adc78d64
+  sha: sha256:91ee605b09bd024ed97338bed442285c5980810d9a94f23aa182255e1c16316b
 nfs-debs/rpcbind_0.2.3-0.2_amd64.deb:
   size: 40252
-  object_id: 28ab342f-4f2c-4bc0-76ec-322bcedef55d
-  sha: 8fa58cfcb1862c6d337d10496fada5f1a6e94a03
+  object_id: e331ee86-8eff-4cc2-7705-dc9dfdec2fbf
+  sha: sha256:7c9d1aca35cd01ef0c9cbc90f93e993116e84de1967c429e1130a16281fd3a6e
