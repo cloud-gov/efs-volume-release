@@ -3,7 +3,7 @@ name: efsdriver
 
 dependencies:
 - efs-nfs-debs
-- golang-1.20-linux
+- golang-1.22-linux
 
 files:
   - code.cloudfoundry.org/cfhttp/*.go # gosub
