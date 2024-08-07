@@ -13,7 +13,6 @@ files:
   - code.cloudfoundry.org/debugserver/*.go # gosub
   - code.cloudfoundry.org/dockerdriver/*.go # gosub
   - code.cloudfoundry.org/dockerdriver/driverhttp/*.go # gosub
-  - code.cloudfoundry.org/dockerdriver/invoker/*.go # gosub
   - code.cloudfoundry.org/efsdriver/cmd/efsdriver/*.go # gosub
   - code.cloudfoundry.org/efsdriver/efsmounter/*.go # gosub
   - code.cloudfoundry.org/efsdriver/efsvoltools/*.go # gosub
