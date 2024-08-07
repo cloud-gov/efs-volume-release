@@ -1,21 +1,20 @@
 package chug_test
 
 import (
+	"code.cloudfoundry.org/lager/v3/chug"
 	"errors"
 	"io"
 	"time"
 
 	"code.cloudfoundry.org/lager/v3"
-	. "code.cloudfoundry.org/lager/chug"
-
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Chug", func() {
 	var (
 		logger     lager.Logger
-		stream     chan Entry
+		stream     chan chug.Entry
 		pipeReader *io.PipeReader
 		pipeWriter *io.PipeWriter
 	)
@@ -24,11 +23,11 @@ var _ = Describe("Chug", func() {
 		pipeReader, pipeWriter = io.Pipe()
 		logger = lager.NewLogger("chug-test")
 		logger.RegisterSink(lager.NewWriterSink(pipeWriter, lager.DEBUG))
-		stream = make(chan Entry, 100)
+		stream = make(chan chug.Entry, 100)
 	})
 
 	JustBeforeEach(func() {
-		go Chug(pipeReader, stream)
+		go chug.Chug(pipeReader, stream)
 	})
 
 	AfterEach(func() {
@@ -44,7 +43,7 @@ var _ = Describe("Chug", func() {
 
 			entry := <-stream
 			Expect(entry.IsLager).To(BeTrue())
-			Expect(entry.Log).To(MatchLogEntry(LogEntry{
+			Expect(entry.Log).To(MatchLogEntry(chug.LogEntry{
 				LogLevel: lager.DEBUG,
 				Source:   "chug-test",
 				Message:  "chug-test.chug",
@@ -53,7 +52,7 @@ var _ = Describe("Chug", func() {
 
 			entry = <-stream
 			Expect(entry.IsLager).To(BeTrue())
-			Expect(entry.Log).To(MatchLogEntry(LogEntry{
+			Expect(entry.Log).To(MatchLogEntry(chug.LogEntry{
 				LogLevel: lager.INFO,
 				Source:   "chug-test",
 				Message:  "chug-test.again",
@@ -72,7 +71,7 @@ var _ = Describe("Chug", func() {
 			It("should include the error", func() {
 				data := lager.Data{"some-float": 3.0, "some-string": "foo"}
 				logger.Error("chug", errors.New("some-error"), data)
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.ERROR,
 					Source:   "chug-test",
 					Message:  "chug-test.chug",
@@ -87,7 +86,7 @@ var _ = Describe("Chug", func() {
 			It("should not take the error out of the data map", func() {
 				data := lager.Data{"some-float": 3.0, "some-string": "foo", "error": "some-error"}
 				logger.Info("chug", data)
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.chug",
@@ -109,7 +108,7 @@ var _ = Describe("Chug", func() {
 				nestedSession = firstSession.Session("nested-session-2")
 				nestedSession.Info("modernify")
 
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.encabulate",
@@ -117,7 +116,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-1.baconize",
@@ -125,7 +124,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.remodulate",
@@ -133,7 +132,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-1.ergonomize",
@@ -141,7 +140,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-2.modernify",
@@ -165,7 +164,7 @@ var _ = Describe("Chug", func() {
 
 				entry := <-stream
 				Expect(entry.IsLager).To(BeTrue())
-				Expect(entry.Log).To(MatchLogEntry(LogEntry{
+				Expect(entry.Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.DEBUG,
 					Source:   "chug-test",
 					Message:  "chug-test.chug",
@@ -174,7 +173,7 @@ var _ = Describe("Chug", func() {
 
 				entry = <-stream
 				Expect(entry.IsLager).To(BeTrue())
-				Expect(entry.Log).To(MatchLogEntry(LogEntry{
+				Expect(entry.Log).To(MatchLogEntry(chug.LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.again",
@@ -186,12 +185,14 @@ var _ = Describe("Chug", func() {
 
 	Context("handling lager JSON that is surrounded by non-JSON", func() {
 		var input []byte
-		var entry Entry
+		var entry chug.Entry
 
 		JustBeforeEach(func() {
 			input = []byte(`[some-component][e]{"timestamp":"1407102779.028711081","source":"chug-test","message":"chug-test.chug","log_level":0,"data":{"some-float":3,"some-string":"foo"}}...some trailing stuff`)
-			pipeWriter.Write(input)
-			pipeWriter.Write([]byte("\n"))
+			_, err := pipeWriter.Write(input)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = pipeWriter.Write([]byte("\n"))
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(stream).Should(Receive(&entry))
 		})
@@ -211,22 +212,16 @@ var _ = Describe("Chug", func() {
 
 	Context("handling malformed/non-lager data", func() {
 		var input []byte
-		var entry Entry
+		var entry chug.Entry
 
 		JustBeforeEach(func() {
-			pipeWriter.Write(input)
-			pipeWriter.Write([]byte("\n"))
+			_, err := pipeWriter.Write(input)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = pipeWriter.Write([]byte("\n"))
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(stream).Should(Receive(&entry))
 		})
-
-		itReturnsRawData := func() {
-			It("returns raw data", func() {
-				Expect(entry.IsLager).To(BeFalse())
-				Expect(entry.Log).To(BeZero())
-				Expect(entry.Raw).To(Equal(input))
-			})
-		}
 
 		Context("when fed a stream of malformed lager messages", func() {
 			Context("when the timestamp is invalid", func() {
@@ -234,7 +229,7 @@ var _ = Describe("Chug", func() {
 					input = []byte(`{"timestamp":"tomorrow","source":"chug-test","message":"chug-test.chug","log_level":3,"data":{"some-float":3,"some-string":"foo","error":7}}`)
 				})
 
-				itReturnsRawData()
+				itReturnsRawData(entry, input)
 			})
 
 			Context("when the error does not parse", func() {
@@ -242,7 +237,7 @@ var _ = Describe("Chug", func() {
 					input = []byte(`{"timestamp":"1407102779.028711081","source":"chug-test","message":"chug-test.chug","log_level":3,"data":{"some-float":3,"some-string":"foo","error":7}}`)
 				})
 
-				itReturnsRawData()
+				itReturnsRawData(entry, input)
 			})
 
 			Context("when the trace does not parse", func() {
@@ -250,7 +245,7 @@ var _ = Describe("Chug", func() {
 					input = []byte(`{"timestamp":"1407102779.028711081","source":"chug-test","message":"chug-test.chug","log_level":3,"data":{"some-float":3,"some-string":"foo","trace":7}}`)
 				})
 
-				itReturnsRawData()
+				itReturnsRawData(entry, input)
 			})
 
 			Context("when the session does not parse", func() {
@@ -258,7 +253,7 @@ var _ = Describe("Chug", func() {
 					input = []byte(`{"timestamp":"1407102779.028711081","source":"chug-test","message":"chug-test.chug","log_level":3,"data":{"some-float":3,"some-string":"foo","session":7}}`)
 				})
 
-				itReturnsRawData()
+				itReturnsRawData(entry, input)
 			})
 		})
 
@@ -267,7 +262,7 @@ var _ = Describe("Chug", func() {
 				input = []byte(`{"source":"chattanooga"}`)
 			})
 
-			itReturnsRawData()
+			itReturnsRawData(entry, input)
 		})
 
 		Context("When fed none-JSON that is not a lager message at all", func() {
@@ -275,7 +270,40 @@ var _ = Describe("Chug", func() {
 				input = []byte(`ß`)
 			})
 
-			itReturnsRawData()
+			itReturnsRawData(entry, input)
+		})
+	})
+
+	Context("when writing is complete", func() {
+		var input []byte
+		var entry chug.Entry
+
+		BeforeEach(func() {
+			input = []byte("hello")
+		})
+
+		JustBeforeEach(func() {
+			_, err := pipeWriter.Write(input)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = pipeWriter.Write([]byte("\n"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(pipeWriter.Close()).To(Succeed())
+
+			Eventually(stream).Should(Receive(&entry))
+		})
+
+		itReturnsRawData(entry, input)
+
+		It("returns no more messages", func() {
+			Consistently(stream).ShouldNot(Receive())
 		})
 	})
 })
+
+func itReturnsRawData(entry chug.Entry, input []byte) {
+	It("returns raw data", func() {
+		Expect(entry.IsLager).To(BeFalse())
+		Expect(entry.Log).To(BeZero())
+		Expect(entry.Raw).To(Equal(input))
+	})
+}

@@ -5,7 +5,7 @@ import (
 	"flag"
 
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagerflags"
+	"code.cloudfoundry.org/lager/v3/lagerflags"
 )
 
 func main() {

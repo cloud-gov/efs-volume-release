@@ -3,13 +3,13 @@ package lagerctx_test
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagerctx"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagerctx"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 )
 
 var _ = Describe("Lager Context", func() {

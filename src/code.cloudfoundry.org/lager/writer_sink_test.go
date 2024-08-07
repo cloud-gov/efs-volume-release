@@ -1,33 +1,28 @@
 package lager_test
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/chug"
+	"code.cloudfoundry.org/lager/v3/chug"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("WriterSink", func() {
-	const MaxThreads = 100
 
 	var sink lager.Sink
 	var writer *copyWriter
-
-	BeforeSuite(func() {
-		runtime.GOMAXPROCS(MaxThreads)
-	})
 
 	BeforeEach(func() {
 		writer = NewCopyWriter()
@@ -51,7 +46,8 @@ var _ = Describe("WriterSink", func() {
 
 		It("logs the serialization error", func() {
 			message := map[string]interface{}{}
-			json.Unmarshal(writer.Copy(), &message)
+			err := json.Unmarshal(writer.Copy(), &message)
+			Expect(err).NotTo(HaveOccurred())
 			Expect(message["message"]).To(Equal("hello world"))
 			Expect(message["log_level"]).To(Equal(float64(1)))
 			Expect(message["data"].(map[string]interface{})["lager serialisation error"]).To(Equal("json: unsupported type: func()"))
@@ -92,6 +88,39 @@ var _ = Describe("WriterSink", func() {
 				}
 				Expect(line).To(MatchJSON(fmt.Sprintf(`{"message":"%s","log_level":1,"timestamp":"","source":"","data":null}`, content)))
 			}
+		})
+	})
+
+	Context("when using a buffered writer", func() {
+		var (
+			colWriter  *collectingWriter
+			bufferSize int
+		)
+
+		BeforeEach(func() {
+			colWriter = &collectingWriter{}
+		})
+
+		JustBeforeEach(func() {
+			bufWriter := bufio.NewWriterSize(colWriter, bufferSize)
+			sink = lager.NewWriterSink(bufWriter, lager.INFO)
+		})
+
+		Context("and the message has length exactly equal to the buffer size", func() {
+			var message lager.LogFormat
+
+			BeforeEach(func() {
+				message = lager.LogFormat{LogLevel: lager.INFO, Message: "hello"}
+				bufferSize = len(message.ToJSON())
+			})
+
+			It("does not write messages starting with a new line", func() {
+				sink.Log(message)
+				sink.Log(message)
+				Expect(len(colWriter.writes)).To(Equal(2))
+				Expect(colWriter.writes[0]).NotTo(HavePrefix("\n"))
+				Expect(colWriter.writes[1]).NotTo(HavePrefix("\n"))
+			})
 		})
 	})
 })
@@ -163,7 +192,7 @@ var _ = Describe("PrettyPrintWriter", func() {
 				"123.",
 				"123.456.",
 				"123.456.789",
-				strconv.FormatInt(time.Now().Unix(), 10),         // invalid - missing "."
+				strconv.FormatInt(time.Now().Unix(), 10), // invalid - missing "."
 				strconv.FormatInt(-time.Now().Unix(), 10) + ".0", // negative
 				time.Now().Format(time.RFC3339),
 				time.Now().Format(time.RFC3339Nano),
@@ -246,6 +275,39 @@ var _ = Describe("PrettyPrintWriter", func() {
 			}
 		})
 	})
+
+	Context("when using a buffered writer", func() {
+		var (
+			colWriter  *collectingWriter
+			bufferSize int
+		)
+
+		BeforeEach(func() {
+			colWriter = &collectingWriter{}
+		})
+
+		JustBeforeEach(func() {
+			bufWriter := bufio.NewWriterSize(colWriter, bufferSize)
+			sink = lager.NewPrettySink(bufWriter, lager.INFO)
+		})
+
+		Context("and the message has length exactly equal to the buffer size", func() {
+			var message lager.LogFormat
+
+			BeforeEach(func() {
+				message = lager.LogFormat{LogLevel: lager.INFO, Message: "hello"}
+				bufferSize = len(message.ToJSON())
+			})
+
+			It("does not write messages starting with a new line", func() {
+				sink.Log(message)
+				sink.Log(message)
+				Expect(len(colWriter.writes)).To(Equal(2))
+				Expect(colWriter.writes[0]).NotTo(HavePrefix("\n"))
+				Expect(colWriter.writes[1]).NotTo(HavePrefix("\n"))
+			})
+		})
+	})
 })
 
 // copyWriter is an INTENTIONALLY UNSAFE writer. Use it to test code that
@@ -278,6 +340,15 @@ func (writer *copyWriter) Copy() []byte {
 	contents := make([]byte, len(writer.contents))
 	copy(contents, writer.contents)
 	return contents
+}
+
+type collectingWriter struct {
+	writes []string
+}
+
+func (w *collectingWriter) Write(p []byte) (n int, err error) {
+	w.writes = append(w.writes, string(p))
+	return len(p), nil
 }
 
 // duplicate of logger.go's formatTimestamp() function

@@ -2,8 +2,9 @@ package main_test
 
 import (
 	"os/exec"
+	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
@@ -19,7 +20,7 @@ func TestIntegration(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	testBinary, err = gexec.Build("code.cloudfoundry.org/lager/lagerflags/integration", "-race")
+	testBinary, err = gexec.Build("code.cloudfoundry.org/lager/v3/lagerflags/integration", "-race")
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -31,7 +32,7 @@ var _ = Describe("CF-Lager", func() {
 	It("provides flags", func() {
 		session, err := gexec.Start(exec.Command(testBinary, "--help"), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		session.Wait()
+		session.Wait(3 * time.Second)
 		Expect(session.Err.Contents()).To(ContainSubstring("-logLevel"))
 	})
 

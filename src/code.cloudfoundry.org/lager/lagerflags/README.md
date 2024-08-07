@@ -1,4 +1,5 @@
-# lagerflags
+lagerflags
+========
 
 **Note**: This repository should be imported as `code.cloudfoundry.org/lager/lagerflags`.
 
@@ -16,7 +17,7 @@ import (
     "flag"
     "fmt"
 
-    "code.cloudfoundry.org/lager/lagerflags"
+    "code.cloudfoundry.org/lager/v3/lagerflags"
     "code.cloudfoundry.org/lager/v3"
 )
 
