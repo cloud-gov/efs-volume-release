@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package mountchecker_test
@@ -5,11 +6,12 @@ package mountchecker_test
 import (
 	"errors"
 	"io"
+	"regexp"
 
 	"code.cloudfoundry.org/goshims/bufioshim/bufio_fake"
 	"code.cloudfoundry.org/goshims/osshim/os_fake"
 	"code.cloudfoundry.org/volumedriver/mountchecker"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -51,13 +53,20 @@ var _ = Describe("Mountchecker", func() {
 				Expect(fakeProcMountsFile.CloseCallCount()).To(Equal(1))
 			})
 
-			Context("when the path being checked is a regexp", func() {
-				It("return true", func() {
-					exists, err := mountChecker.Exists("^/mount/.*")
-					Expect(err).NotTo(HaveOccurred())
-					Expect(exists).To(BeTrue())
-				})
+		})
+
+		Context("when an intermediate mount exists", func() {
+			BeforeEach(func() {
+				fakeProcMountsReader.ReadStringReturnsOnCall(0, "nfsserver:/export/dir /mount/path_mapfs nfs options 0 0\n", nil)
+				fakeProcMountsReader.ReadStringReturnsOnCall(1, "", io.EOF)
 			})
+
+			It("returns false", func() {
+				exists, err := mountChecker.Exists("/mount/path")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(exists).To(BeFalse())
+			})
+
 		})
 
 		Context("when a mount path does not exist", func() {
@@ -115,19 +124,13 @@ var _ = Describe("Mountchecker", func() {
 			})
 		})
 
-		Context("when a bad regexp is passed to Exists", func() {
-			It("returns an error", func() {
-				_, err := mountChecker.Exists("a(b")
-				Expect(err).To(HaveOccurred())
-
-				Expect(fakeProcMountsFile.CloseCallCount()).To(Equal(1))
-			})
-		})
 	})
 
 	Describe("List", func() {
 		It("returns a list of mount paths matching a regexp", func() {
-			mounts, err := mountChecker.List("^/mount/.*")
+			pattern, err := regexp.Compile("^/mount/.*")
+			Expect(err).NotTo(HaveOccurred())
+			mounts, err := mountChecker.List(pattern)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mounts).To(ConsistOf([]string{
 				"/mount/path",
@@ -140,16 +143,12 @@ var _ = Describe("Mountchecker", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := mountChecker.List("/mount/path")
+				pattern, err := regexp.Compile("/mount/path")
+				Expect(err).NotTo(HaveOccurred())
+				_, err = mountChecker.List(pattern)
 				Expect(err).To(MatchError("open failed"))
 			})
 		})
 
-		Context("when a bad regexp is passed to List", func() {
-			It("returns an error", func() {
-				_, err := mountChecker.List("a(b")
-				Expect(err).To(HaveOccurred())
-			})
-		})
 	})
 })

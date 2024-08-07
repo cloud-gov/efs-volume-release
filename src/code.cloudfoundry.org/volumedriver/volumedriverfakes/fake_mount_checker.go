@@ -2,9 +2,10 @@
 package volumedriverfakes
 
 import (
-	sync "sync"
+	"regexp"
+	"sync"
 
-	mountchecker "code.cloudfoundry.org/volumedriver/mountchecker"
+	"code.cloudfoundry.org/volumedriver/mountchecker"
 )
 
 type FakeMountChecker struct {
@@ -21,10 +22,10 @@ type FakeMountChecker struct {
 		result1 bool
 		result2 error
 	}
-	ListStub        func(string) ([]string, error)
+	ListStub        func(*regexp.Regexp) ([]string, error)
 	listMutex       sync.RWMutex
 	listArgsForCall []struct {
-		arg1 string
+		arg1 *regexp.Regexp
 	}
 	listReturns struct {
 		result1 []string
@@ -44,15 +45,16 @@ func (fake *FakeMountChecker) Exists(arg1 string) (bool, error) {
 	fake.existsArgsForCall = append(fake.existsArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	stub := fake.ExistsStub
+	fakeReturns := fake.existsReturns
 	fake.recordInvocation("Exists", []interface{}{arg1})
 	fake.existsMutex.Unlock()
-	if fake.ExistsStub != nil {
-		return fake.ExistsStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.existsReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -101,21 +103,22 @@ func (fake *FakeMountChecker) ExistsReturnsOnCall(i int, result1 bool, result2 e
 	}{result1, result2}
 }
 
-func (fake *FakeMountChecker) List(arg1 string) ([]string, error) {
+func (fake *FakeMountChecker) List(arg1 *regexp.Regexp) ([]string, error) {
 	fake.listMutex.Lock()
 	ret, specificReturn := fake.listReturnsOnCall[len(fake.listArgsForCall)]
 	fake.listArgsForCall = append(fake.listArgsForCall, struct {
-		arg1 string
+		arg1 *regexp.Regexp
 	}{arg1})
+	stub := fake.ListStub
+	fakeReturns := fake.listReturns
 	fake.recordInvocation("List", []interface{}{arg1})
 	fake.listMutex.Unlock()
-	if fake.ListStub != nil {
-		return fake.ListStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.listReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -125,13 +128,13 @@ func (fake *FakeMountChecker) ListCallCount() int {
 	return len(fake.listArgsForCall)
 }
 
-func (fake *FakeMountChecker) ListCalls(stub func(string) ([]string, error)) {
+func (fake *FakeMountChecker) ListCalls(stub func(*regexp.Regexp) ([]string, error)) {
 	fake.listMutex.Lock()
 	defer fake.listMutex.Unlock()
 	fake.ListStub = stub
 }
 
-func (fake *FakeMountChecker) ListArgsForCall(i int) string {
+func (fake *FakeMountChecker) ListArgsForCall(i int) *regexp.Regexp {
 	fake.listMutex.RLock()
 	defer fake.listMutex.RUnlock()
 	argsForCall := fake.listArgsForCall[i]

@@ -1,3 +1,4 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package mountchecker
@@ -11,11 +12,12 @@ import (
 	"code.cloudfoundry.org/goshims/osshim"
 )
 
-//go:generate counterfeiter -o ../volumedriverfakes/fake_mount_checker.go . MountChecker
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o ../volumedriverfakes/fake_mount_checker.go . MountChecker
 
 type MountChecker interface {
 	Exists(string) (bool, error)
-	List(string) ([]string, error)
+	List(*regexp.Regexp) ([]string, error)
 }
 
 type Checker struct {
@@ -39,12 +41,7 @@ func (c Checker) Exists(mountPath string) (bool, error) {
 	}
 
 	for _, mount := range c.mounts {
-		exists, err := regexp.MatchString(mountPath, mount)
-		if err != nil {
-			return false, err
-		}
-
-		if exists {
+		if mountPath == mount {
 			return true, nil
 		}
 	}
@@ -52,7 +49,7 @@ func (c Checker) Exists(mountPath string) (bool, error) {
 	return false, nil
 }
 
-func (c Checker) List(mountPathRegexp string) ([]string, error) {
+func (c Checker) List(pattern *regexp.Regexp) ([]string, error) {
 	err := c.loadProcMounts()
 	if err != nil {
 		return []string{}, err
@@ -61,10 +58,7 @@ func (c Checker) List(mountPathRegexp string) ([]string, error) {
 	mounts := []string{}
 
 	for _, mount := range c.mounts {
-		exists, err := regexp.MatchString(mountPathRegexp, mount)
-		if err != nil {
-			return []string{}, err
-		}
+		exists := pattern.MatchString(mount)
 
 		if exists {
 			mounts = append(mounts, mount)
