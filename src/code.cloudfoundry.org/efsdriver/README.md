@@ -1,0 +1,2 @@
+# efsdriver
+This driver mounts Amazon Elastic Filesystem volumes and makes them consumable by Cloudfoundry applications.  It is intended to be deployed to a Diego cell in an AWS based Cloud Foundry deployment that has volume services enabled.  For instructions on deploying and using this driver and the corresponding [efsbroker](https://github.com/cloudfoundry-incubator/efsbroker) in your Cloud Foundry, visit the [efs-volume-release git repository](https://github.com/cloudfoundry-incubator/efs-volume-release).
