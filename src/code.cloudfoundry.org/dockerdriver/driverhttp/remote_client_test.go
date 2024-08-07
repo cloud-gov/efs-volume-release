@@ -1,31 +1,24 @@
 package driverhttp_test
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"net/http"
+	"os/exec"
+	"path"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-
-	"bytes"
-	"fmt"
-
-	"io/ioutil"
-
-	"os"
-	"os/exec"
-	"path"
-
-	"context"
-
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
 	"code.cloudfoundry.org/goshims/http_wrap/http_fake"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagertest"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/tedsuo/ifrit"
-	"github.com/tedsuo/ifrit/ginkgomon"
+	ginkgomon "github.com/tedsuo/ifrit/ginkgomon_v2"
 )
 
 var _ = Describe("RemoteClient", func() {
@@ -308,8 +301,7 @@ var _ = Describe("RemoteClient", func() {
 		)
 
 		BeforeEach(func() {
-			tmpdir, err := ioutil.TempDir(os.TempDir(), "fake-driver-test")
-			Expect(err).ShouldNot(HaveOccurred())
+			tmpdir := GinkgoT().TempDir()
 
 			socketPath = path.Join(tmpdir, "localdriver.sock")
 
@@ -374,9 +366,7 @@ var _ = Describe("RemoteClient", func() {
 			Expect(activateResponse.Err).To(Equal(""))
 			Expect(activateResponse.Implements).To(Equal([]string{"VolumeDriver"}))
 		})
-
 	})
-
 })
 
 func fastForward(fakeClock *fakeclock.FakeClock, seconds int) {
