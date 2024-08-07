@@ -14,7 +14,7 @@ import (
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/goshims/http_wrap"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/tedsuo/rata"
 
 	os_http "net/http"

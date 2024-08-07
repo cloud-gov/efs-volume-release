@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/chug"
 	. "code.cloudfoundry.org/lager/ginkgoreporter"
 

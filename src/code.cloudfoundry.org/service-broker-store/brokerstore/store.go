@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"code.cloudfoundry.org/goshims/ioutilshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/service-broker-store/brokerstore/credhub_shims"
 	"github.com/pivotal-cf/brokerapi"
 	"golang.org/x/crypto/bcrypt"

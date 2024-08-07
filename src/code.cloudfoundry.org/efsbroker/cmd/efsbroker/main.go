@@ -16,7 +16,7 @@ import (
 	"code.cloudfoundry.org/efsbroker/utils"
 	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolshttp"
 	"code.cloudfoundry.org/goshims/osshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/lagerflags"
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
 	"github.com/aws/aws-sdk-go/aws"

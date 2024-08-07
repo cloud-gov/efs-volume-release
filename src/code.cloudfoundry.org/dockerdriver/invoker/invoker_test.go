@@ -7,7 +7,7 @@ import (
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
 	"code.cloudfoundry.org/goshims/execshim/exec_fake"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/lagertest"
 
 	"code.cloudfoundry.org/dockerdriver/invoker"

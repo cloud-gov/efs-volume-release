@@ -1,5 +1,4 @@
-lager
-=====
+# lager
 
 **Note**: This repository should be imported as `code.cloudfoundry.org/lager`.
 
@@ -11,7 +10,7 @@ Instantiate a logger with the name of your component.
 
 ```go
 import (
-  "code.cloudfoundry.org/lager"
+  "code.cloudfoundry.org/lager/v3"
 )
 
 logger := lager.NewLogger("my-app")
@@ -39,8 +38,15 @@ logger.Info("doing-stuff", lager.Data{
 ```
 
 output:
+
 ```json
-{ "source": "my-app", "message": "doing-stuff", "data": { "informative": true }, "timestamp": 1232345, "log_level": 1 }
+{
+  "source": "my-app",
+  "message": "doing-stuff",
+  "data": { "informative": true },
+  "timestamp": 1232345,
+  "log_level": 1
+}
 ```
 
 Error messages also take an `Error` object:
@@ -50,8 +56,15 @@ logger.Error("failed-to-do-stuff", errors.New("Something went wrong"))
 ```
 
 output:
+
 ```json
-{ "source": "my-app", "message": "failed-to-do-stuff", "data": { "error": "Something went wrong" }, "timestamp": 1232345, "log_level": 1 }
+{
+  "source": "my-app",
+  "message": "failed-to-do-stuff",
+  "data": { "error": "Something went wrong" },
+  "timestamp": 1232345,
+  "log_level": 1
+}
 ```
 
 ### Sessions
@@ -70,7 +83,13 @@ contextualLogger.Info("my-action")
 output:
 
 ```json
-{ "source": "my-app", "message": "my-task.my-action", "data": { "request-id": 5 }, "timestamp": 1232345, "log_level": 1 }
+{
+  "source": "my-app",
+  "message": "my-task.my-action",
+  "data": { "request-id": 5 },
+  "timestamp": 1232345,
+  "log_level": 1
+}
 ```
 
 ## License

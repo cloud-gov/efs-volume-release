@@ -4,7 +4,7 @@ package brokerstorefakes
 import (
 	"sync"
 
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
 	"github.com/pivotal-cf/brokerapi"
 )

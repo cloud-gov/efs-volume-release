@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/goshims/sqlshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 )
 
 //go:generate counterfeiter -o ../brokerstorefakes/fake_sql_variant.go . SqlVariant

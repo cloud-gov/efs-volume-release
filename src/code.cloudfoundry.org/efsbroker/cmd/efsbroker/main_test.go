@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"code.cloudfoundry.org/goshims/osshim/os_fake"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/lagertest"
 
 	"encoding/json"

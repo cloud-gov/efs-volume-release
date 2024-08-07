@@ -10,7 +10,7 @@ import (
 	"code.cloudfoundry.org/goshims/filepathshim/filepath_fake"
 	"code.cloudfoundry.org/goshims/ioutilshim/ioutil_fake"
 	"code.cloudfoundry.org/goshims/osshim/os_fake"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/lagertest"
 	"code.cloudfoundry.org/volumedriver/volumedriverfakes"
 	. "github.com/onsi/ginkgo"

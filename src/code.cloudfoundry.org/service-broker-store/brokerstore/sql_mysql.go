@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/goshims/sqlshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/go-sql-driver/mysql"
 )
 

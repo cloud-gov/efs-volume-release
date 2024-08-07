@@ -5,7 +5,7 @@ import (
 
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/goshims/execshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 )
 
 //go:generate counterfeiter -o ../dockerdriverfakes/fake_invoker.go . Invoker

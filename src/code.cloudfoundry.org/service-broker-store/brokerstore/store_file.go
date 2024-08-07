@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/goshims/ioutilshim"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/pivotal-cf/brokerapi"
 )
 
