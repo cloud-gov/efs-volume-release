@@ -7,7 +7,7 @@ import (
 
 	"code.cloudfoundry.org/goshims/ioutilshim/ioutil_fake"
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
 	"github.com/pivotal-cf/brokerapi"
 

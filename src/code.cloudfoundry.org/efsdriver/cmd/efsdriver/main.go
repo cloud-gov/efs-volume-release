@@ -20,7 +20,7 @@ import (
 	"code.cloudfoundry.org/goshims/ioutilshim"
 	"code.cloudfoundry.org/goshims/osshim"
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagerflags"
+	"code.cloudfoundry.org/lager/v3/lagerflags"
 	"code.cloudfoundry.org/volumedriver"
 	"code.cloudfoundry.org/volumedriver/mountchecker"
 	"code.cloudfoundry.org/volumedriver/oshelper"

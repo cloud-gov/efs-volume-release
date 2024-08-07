@@ -16,7 +16,7 @@ import (
 	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolshttp"
 	"code.cloudfoundry.org/goshims/http_wrap/http_fake"
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

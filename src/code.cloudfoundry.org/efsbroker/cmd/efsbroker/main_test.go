@@ -8,7 +8,7 @@ import (
 
 	"code.cloudfoundry.org/goshims/osshim/os_fake"
 	"code.cloudfoundry.org/lager/v3"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 
 	"encoding/json"
 	"io/ioutil"
@@ -207,7 +207,7 @@ var _ = Describe("Efsbroker Main", func() {
 	Context("Missing required args", func() {
 		It("fails with an error", func() {
 			var args []string
-			args = append(args, "-listenAddr", "0.0.0.0:" + strconv.Itoa(8999+GinkgoParallelNode()))
+			args = append(args, "-listenAddr", "0.0.0.0:"+strconv.Itoa(8999+GinkgoParallelNode()))
 			args = append(args, "-username", "admin")
 			args = append(args, "-password", "password")
 			args = append(args, "-dataDir", os.TempDir())

@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/efsdriver/efsdriverfakes"
 	"code.cloudfoundry.org/efsdriver/efsvoltools"
 	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolshttp"
-	"code.cloudfoundry.org/lager/lagertest"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
