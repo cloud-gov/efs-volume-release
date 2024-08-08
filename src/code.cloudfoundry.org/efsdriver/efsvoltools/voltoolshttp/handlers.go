@@ -12,7 +12,7 @@ import (
 	"github.com/tedsuo/rata"
 )
 
-func NewHandler(logger lager.Logger, client efsvoltools.VolTools) (http.Handler, error) {
+func NewHandler(logger lager.Logger, client efsvoltools.VolTools) http.Handler {
 	logger = logger.Session("server")
 	logger.Info("start")
 	defer logger.Info("end")
