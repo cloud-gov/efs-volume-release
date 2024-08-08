@@ -243,11 +243,18 @@ func createEfsDriverUnixServer(logger lager.Logger, client dockerdriver.Driver, 
 	return http_server.NewUnixServer(atAddress, handler)
 }
 
-func newLogger() (lager.Logger, *lager.ReconfigurableSink) {
-	lagerConfig := lagerflags.ConfigFromFlags()
-	lagerConfig.RedactSecrets = true
+func NewLogger(name string) lager.Logger {
+	logger := lager.NewLogger(name)
 
-	return lagerflags.NewFromConfig("efs-driver-server", lagerConfig)
+	logLevel := lager.INFO
+	if _, debug := os.LookupEnv("GSB_DEBUG"); debug {
+		logLevel = lager.DEBUG
+	}
+
+	logger.RegisterSink(lager.NewWriterSink(os.Stderr, lager.ERROR))
+	logger.RegisterSink(lager.NewWriterSink(os.Stdout, logLevel))
+
+	return logger
 }
 
 func parseCommandLine() {
