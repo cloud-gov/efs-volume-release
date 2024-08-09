@@ -36,6 +36,7 @@ files:
   - code.cloudfoundry.org/debugserver/*.go # gosub
   - code.cloudfoundry.org/dockerdriver/*.go # gosub
   - code.cloudfoundry.org/dockerdriver/driverhttp/*.go # gosub
+  - code.cloudfoundry.org/efsbroker/*
   - code.cloudfoundry.org/efsbroker/cmd/efsbroker/*.go # gosub
   - code.cloudfoundry.org/efsbroker/efsbroker/*.go # gosub
   - code.cloudfoundry.org/efsbroker/utils/*.go # gosub
