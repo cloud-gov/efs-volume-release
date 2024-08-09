@@ -5,9 +5,25 @@ source /var/vcap/packages/golang-1.22-linux/bosh/compile.env
 mkdir $BOSH_INSTALL_TARGET/src && cp -a * $BOSH_INSTALL_TARGET/src/
 mkdir -p $BOSH_INSTALL_TARGET/bin
 
-pushd code.cloudfoundry.org/efsdriver
-go mod init code.cloudfoundry.org/efsdriver
-go mod tidy
+go build -o "$BOSH_INSTALL_TARGET/bin/code.cloudfoundry.org/efsdriver" code.cloudfoundry.org/efsdriver
+
+set -e # exit immediately if a simple command exits with a non-zero status
+set -u # report the usage of uninitialized variables
+
+mkdir -p ${BOSH_INSTALL_TARGET}/src
+mkdir -p ${BOSH_INSTALL_TARGET}/bin
+cp -a . ${BOSH_INSTALL_TARGET}/src
+
+source /var/vcap/packages/golang-1.22-linux/bosh/compile.env
+export GOPATH=$BOSH_INSTALL_TARGET
+
+export PATH=$PATH:$(pwd)
+export INSTALL_DIRECTORY=$(pwd)
+
+pushd ${BOSH_INSTALL_TARGET}/src/code.cloudfoundry.org/efsdriver
+  go build -buildvcs=false
+  cp efsdriver ${BOSH_INSTALL_TARGET}/bin
 popd
 
-go build -o "$BOSH_INSTALL_TARGET/bin/code.cloudfoundry.org/efsdriver" code.cloudfoundry.org/efsdriver
+# # Clean up source artifacts
+# rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg
