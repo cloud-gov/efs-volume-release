@@ -9,8 +9,7 @@ export PATH=$GOROOT/bin:$PATH
 export GOCACHE=/tmp/
 go clean -cache
 go clean -modcache
-ls
-go install ./code.cloudfoundry.org/efsdriver/cmd/efsdriver
+go install code.cloudfoundry.org/efsdriver/cmd/efsdriver
 
 # clean up source artifacts
 rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg
