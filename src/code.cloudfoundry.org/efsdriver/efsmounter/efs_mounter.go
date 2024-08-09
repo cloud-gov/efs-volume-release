@@ -7,7 +7,7 @@ import (
 
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
-	"code.cloudfoundry.org/dockerdriver/invoker"
+	"code.cloudfoundry.org/volumedriver/invoker"
 )
 
 //go:generate counterfeiter -o ../efsdriverfakes/fake_mounter.go . Mounter
