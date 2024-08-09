@@ -9,6 +9,7 @@ export PATH=$GOROOT/bin:$PATH
 export GOCACHE=/tmp/
 go clean -cache
 go clean -modcache
+ls $GOPATH
 go install $GOPATH/code.cloudfoundry.org/efsbroker/cmd/efsbroker
 
 # clean up source artifacts
