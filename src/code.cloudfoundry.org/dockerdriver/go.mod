@@ -32,3 +32,5 @@ require (
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace code.cloudfoundry.org/lager/v3 v3.0.3 => ./code.cloudfoundry.org/lager/v3
