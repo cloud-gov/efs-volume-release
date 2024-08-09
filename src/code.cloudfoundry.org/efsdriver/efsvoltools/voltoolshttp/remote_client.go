@@ -132,7 +132,7 @@ func (r *remoteClient) do(env dockerdriver.Env, requestFactory *reqFactory) (*os
 		logger.Error("request-failed", err)
 		return response, err
 	}
-	logger.Debug("response", lager.Data{"response": response.Status})
+	//logger.Debug("response", lager.Data{"response": response.Status})
 
 	return response, nil
 }

@@ -47,7 +47,7 @@ func newOpenPermsHandler(logger lager.Logger, client efsvoltools.VolTools) http.
 
 		openPermsResponse := client.OpenPerms(env, request)
 		if openPermsResponse.Err != "" {
-			logger.Error("failed-modifying-permissions", err, lager.Data{"volume": request.Name})
+			//logger.Error("failed-modifying-permissions", err, lager.Data{"volume": request.Name})
 			cf_http_handlers.WriteJSONResponse(w, http.StatusInternalServerError, openPermsResponse)
 			return
 		}
