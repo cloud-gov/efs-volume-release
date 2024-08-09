@@ -43,7 +43,7 @@ type contextKey struct{}
 // discardLogger is an inert logger.
 type discardLogger struct{}
 
-func (*discardLogger) Debug(string, ...lager.Data)                  {}
+// func (*discardLogger) Debug(string, ...lager.Data)                  {}
 func (*discardLogger) Info(string, ...lager.Data)                   {}
 func (*discardLogger) Error(string, error, ...lager.Data)           {}
 func (*discardLogger) Fatal(string, error, ...lager.Data)           {}
