@@ -2,7 +2,8 @@ set -e
 
 source /var/vcap/packages/golang-1.22-linux/bosh/compile.env
 
-mkdir ../src && cp -a * ../src/ && mv ../src ./src
+mkdir -p $BOSH_INSTALL_TARGET/src
+mkdir ../src && cp -a * ../src/ && mv ../src $BOSH_INSTALL_TARGET/src
 mkdir -p $BOSH_INSTALL_TARGET/bin
 
 #go build -o "$BOSH_INSTALL_TARGET/bin/code.cloudfoundry.org/efsbroker" code.cloudfoundry.org/efsbroker
