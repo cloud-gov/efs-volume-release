@@ -5,4 +5,9 @@ source /var/vcap/packages/golang-1.22-linux/bosh/compile.env
 mkdir $BOSH_INSTALL_TARGET/src && cp -a * $BOSH_INSTALL_TARGET/src/
 mkdir -p $BOSH_INSTALL_TARGET/bin
 
+pushd code.cloudfoundry.org/efsdriver
+go mod init code.cloudfoundry.org/efsdriver
+go mod tidy
+popd
+
 go build -o "$BOSH_INSTALL_TARGET/bin/code.cloudfoundry.org/efsdriver" code.cloudfoundry.org/efsdriver
