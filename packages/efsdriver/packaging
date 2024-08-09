@@ -7,10 +7,7 @@ export GOPATH=$BOSH_INSTALL_TARGET
 export GOROOT=$(readlink -nf /var/vcap/packages/golang-1.22-linux)
 export PATH=$GOROOT/bin:$PATH
 export GOCACHE=/tmp/
-go clean -cache
-go clean -modcache
-ls $GOPATH
-go install code.cloudfoundry.org/efsdriver
+
 
 # clean up source artifacts
 rm -rf ${BOSH_INSTALL_TARGET}/src ${BOSH_INSTALL_TARGET}/pkg
