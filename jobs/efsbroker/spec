@@ -68,3 +68,13 @@ properties:
   efsbroker.log_time_format:
     description: "Format for timestamp in component logs. Valid values are 'unix-epoch' and 'rfc3339'."
     default: "rfc3339"
+  efsbroker.credhub.url:
+    description: "url for credhub"
+  efsbroker.credhub.ca:
+    description: "credhub CA"
+  efsbroker.uaa.clientid":
+    description: "uaa clientid"
+  efsbroker.uaa.clientsecret":
+    description: "uaa client secret"
+  efsbroker.uaa.ca:
+    description: "uaa CA"

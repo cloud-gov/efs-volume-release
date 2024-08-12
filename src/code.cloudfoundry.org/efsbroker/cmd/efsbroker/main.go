@@ -5,7 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"log/slog"
 	"os"
 	"strings"
@@ -22,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/pivotal-cf/brokerapi/v11"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
@@ -117,6 +116,30 @@ var awsSecurityGroups = flag.String(
 	"list of comma separated aws security groups to assign to the mount points (one per subnet id)",
 )
 
+var credhubURL = flag.String(
+	"credhubURL",
+	"",
+	"(optional) CredHub server URL when using CredHub to store broker state",
+)
+
+var credhubCACertPath = flag.String(
+	"credhubCACertPath",
+	"",
+	"(optional) Path to CA Cert for CredHub",
+)
+
+var uaaClientID = flag.String(
+	"uaaClientID",
+	"",
+	"(optional) UAA client ID when using CredHub to store broker state",
+)
+
+var uaaClientSecret = flag.String(
+	"uaaClientSecret",
+	"",
+	"(optional) UAA client secret when using CredHub to store broker state",
+)
+
 var uaaCACertPath = flag.String(
 	"uaaCACertPath",
 	"",
@@ -128,15 +151,6 @@ var storeID = flag.String(
 	"nfsbroker",
 	"(optional) Store ID used to namespace instance details and bindings (credhub only)",
 )
-
-type StoreConfig struct {
-	CredHubURL        string `envconfig:"CH_CRED_HUB_URL"`
-	UaaURL            string `envconfig:"CH_UAA_URL"`
-	UaaClientName     string `envconfig:"CH_UAA_CLIENT_NAME"`
-	UaaClientSecret   string `envconfig:"CH_UAA_CLIENT_SECRET"`
-	SkipSSLValidation bool   `envconfig:"CH_SKIP_SSL_VALIDATION"`
-	CaCertFile        string `envconfig:"CH_CA_CERT_FILE"`
-}
 
 var (
 	dbUsername string
@@ -260,18 +274,31 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
 
-	var store StoreConfig
-	errstore := envconfig.Process("", &store)
-	if errstore != nil {
-		log.Fatal(errstore.Error())
+	var credhubCACert string
+	if *credhubCACertPath != "" {
+		b, err := ioutil.ReadFile(*credhubCACertPath)
+		if err != nil {
+			logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *credhubCACertPath})
+		}
+		credhubCACert = string(b)
 	}
-	newstore := brokerstore.NewStore(
+
+	var uaaCACert string
+	if *uaaCACertPath != "" {
+		b, err := ioutil.ReadFile(*uaaCACertPath)
+		if err != nil {
+			logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *uaaCACertPath})
+		}
+		uaaCACert = string(b)
+	}
+
+	store := brokerstore.NewStore(
 		logger,
-		store.CredHubURL,
-		store.CaCertFile,
-		store.UaaClientName,
-		store.UaaClientSecret,
-		store.CaCertFile,
+		*credhubURL,
+		credhubCACert,
+		*uaaClientID,
+		*uaaClientSecret,
+		uaaCACert,
 		*storeID,
 	)
 
@@ -293,7 +320,7 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		*dataDir,
 		&osshim.OsShim{},
 		clock.NewClock(),
-		newstore,
+		store,
 		efsClient, subnets, efsTools, efsbroker.NewProvisionOperation, efsbroker.NewDeprovisionOperation)
 
 	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
