@@ -6,8 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"code.cloudfoundry.org/clock"
@@ -22,7 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/v11"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 	"github.com/tedsuo/ifrit/http_server"
@@ -114,6 +114,42 @@ var awsSecurityGroups = flag.String(
 	"awsSecurityGroups",
 	"",
 	"list of comma separated aws security groups to assign to the mount points (one per subnet id)",
+)
+
+var credhubURL = flag.String(
+	"credhubURL",
+	"",
+	"(optional) CredHub server URL when using CredHub to store broker state",
+)
+
+var credhubCACertPath = flag.String(
+	"credhubCACertPath",
+	"",
+	"(optional) Path to CA Cert for CredHub",
+)
+
+var uaaClientID = flag.String(
+	"uaaClientID",
+	"",
+	"(optional) UAA client ID when using CredHub to store broker state",
+)
+
+var uaaClientSecret = flag.String(
+	"uaaClientSecret",
+	"",
+	"(optional) UAA client secret when using CredHub to store broker state",
+)
+
+var uaaCACertPath = flag.String(
+	"uaaCACertPath",
+	"",
+	"(optional) Path to CA Cert for UAA used for CredHub authorization",
+)
+
+var storeID = flag.String(
+	"storeID",
+	"nfsbroker",
+	"(optional) Store ID used to namespace instance details and bindings (credhub only)",
 )
 
 var (
@@ -234,27 +270,36 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		panic(err)
 	}
 
-	fileName := filepath.Join(*dataDir, fmt.Sprintf("%s-services.json", *serviceName))
-
 	if *cfServiceName != "" {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
 
-	var dbCACert string
-	if *dbCACertPath != "" {
-		b, err := ioutil.ReadFile(*dbCACertPath)
+	var credhubCACert string
+	if *credhubCACertPath != "" {
+		b, err := ioutil.ReadFile(*credhubCACertPath)
 		if err != nil {
-			logger.Fatal("cannot-read-db-ca-cert", err, lager.Data{"path": *dbCACertPath})
+			logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *credhubCACertPath})
 		}
-		dbCACert = string(b)
+		credhubCACert = string(b)
+	}
+
+	var uaaCACert string
+	if *uaaCACertPath != "" {
+		b, err := ioutil.ReadFile(*uaaCACertPath)
+		if err != nil {
+			logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *uaaCACertPath})
+		}
+		uaaCACert = string(b)
 	}
 
 	store := brokerstore.NewStore(
 		logger,
-		*dbDriver, dbUsername, dbPassword, *dbHostname, *dbPort, *dbName, dbCACert,
-		"", "", "", "", "",
-		fileName,
-		"",
+		*credhubURL,
+		credhubCACert,
+		*uaaClientID,
+		*uaaClientSecret,
+		uaaCACert,
+		*storeID,
 	)
 
 	config := aws.NewConfig()
@@ -268,13 +313,18 @@ func createServer(logger lager.Logger) ifrit.Runner {
 
 	subnets := parseSubnets()
 
-	serviceBroker := efsbroker.New(logger,
-		*serviceName, *serviceId,
-		*dataDir, &osshim.OsShim{}, clock.NewClock(), store,
+	serviceBroker := efsbroker.New(
+		logger,
+		*serviceName,
+		*serviceId,
+		*dataDir,
+		&osshim.OsShim{},
+		clock.NewClock(),
+		store,
 		efsClient, subnets, efsTools, efsbroker.NewProvisionOperation, efsbroker.NewDeprovisionOperation)
 
 	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
-	handler := brokerapi.New(serviceBroker, logger.Session("broker-api"), credentials)
+	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)
 }

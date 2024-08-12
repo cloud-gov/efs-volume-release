@@ -37,20 +37,29 @@ func (m *efsMounter) Mount(env dockerdriver.Env, source string, target string, o
 		}
 	}
 
-	_, err := m.invoker.Invoke(env, "mount", []string{"-t", m.fstype, "-o", m.defaultOpts, source, target})
-	return err
+	invokeResult := m.invoker.Invoke(env, "mount", []string{"-t", m.fstype, "-o", m.defaultOpts, source, target})
+	err := invokeResult.Wait()
+	if err != nil {
+		return safeError(err)
+	}
+	return nil
 }
 
 func (m *efsMounter) Unmount(env dockerdriver.Env, target string) error {
-	_, err := m.invoker.Invoke(env, "umount", []string{target})
-	return err
+	invokeResult := m.invoker.Invoke(env, "umount", []string{target})
+	err := invokeResult.Wait()
+	if err != nil {
+		return safeError(err)
+	}
+	return nil
 }
 
 func (m *efsMounter) Check(env dockerdriver.Env, name, mountPoint string) bool {
 	ctx, cncl := context.WithDeadline(context.TODO(), time.Now().Add(time.Second*5))
 	defer cncl()
 	env = driverhttp.EnvWithContext(ctx, env)
-	_, err := m.invoker.Invoke(env, "mountpoint", []string{"-q", mountPoint})
+	invokeResult := m.invoker.Invoke(env, "mountpoint", []string{"-q", mountPoint})
+	err := invokeResult.Wait()
 
 	if err != nil {
 		// Note: Created volumes (with no mounts) will be removed
@@ -63,4 +72,11 @@ func (m *efsMounter) Check(env dockerdriver.Env, name, mountPoint string) bool {
 
 func (m *efsMounter) Purge(env dockerdriver.Env, path string) {
 	return
+}
+
+func safeError(e error) error {
+	if e == nil {
+		return nil
+	}
+	return dockerdriver.SafeError{SafeDescription: e.Error()}
 }

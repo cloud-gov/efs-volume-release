@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/v11"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/efsbroker/efsbroker"

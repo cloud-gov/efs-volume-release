@@ -16,7 +16,9 @@ import (
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 )
 
 const (
@@ -118,7 +120,7 @@ func New(
 	return &theBroker
 }
 
-func (b *Broker) Services(_ context.Context) []brokerapi.Service {
+func (b *Broker) Services(_ context.Context) ([]brokerapi.Service, error) {
 	logger := b.logger.Session("services")
 	logger.Info("start")
 	defer logger.Info("end")
@@ -143,7 +145,7 @@ func (b *Broker) Services(_ context.Context) []brokerapi.Service {
 				Description: "scales to higher levels of aggregate throughput and operations per second with a tradeoff of slightly higher latencies for most file operations",
 			},
 		},
-	}}
+	}}, nil
 }
 
 func (b *Broker) Provision(context context.Context, instanceID string, details brokerapi.ProvisionDetails, asyncAllowed bool) (_ brokerapi.ProvisionedServiceSpec, e error) {
@@ -230,7 +232,7 @@ func (b *Broker) Deprovision(context context.Context, instanceID string, details
 	return brokerapi.DeprovisionServiceSpec{IsAsync: true, OperationData: "deprovision"}, nil
 }
 
-func (b *Broker) Bind(context context.Context, instanceID string, bindingID string, details brokerapi.BindDetails) (_ brokerapi.Binding, e error) {
+func (b *Broker) Bind(context context.Context, instanceID string, bindingID string, details brokerapi.BindDetails, bind bool) (_ brokerapi.Binding, e error) {
 	logger := b.logger.Session("bind")
 	logger.Info("start")
 	defer logger.Info("end")
@@ -259,7 +261,6 @@ func (b *Broker) Bind(context context.Context, instanceID string, bindingID stri
 			return brokerapi.Binding{}, err
 		}
 	}
-
 	mode, err := evaluateMode(params)
 	if err != nil {
 		return brokerapi.Binding{}, err
@@ -338,7 +339,7 @@ func (b *Broker) getMountIp(fsId string) (string, error) {
 	return mountConfig, nil
 }
 
-func (b *Broker) Unbind(context context.Context, instanceID string, bindingID string, details brokerapi.UnbindDetails) (e error) {
+func (b *Broker) Unbind(context context.Context, instanceID string, bindingID string, details brokerapi.UnbindDetails, bind bool) (_ domain.UnbindSpec, e error) {
 	logger := b.logger.Session("unbind")
 	logger.Info("start")
 	defer logger.Info("end")
@@ -353,24 +354,24 @@ func (b *Broker) Unbind(context context.Context, instanceID string, bindingID st
 	}()
 
 	if _, err := b.store.RetrieveInstanceDetails(instanceID); err != nil {
-		return brokerapi.ErrInstanceDoesNotExist
+		return domain.UnbindSpec{}, apiresponses.ErrInstanceDoesNotExist
 	}
 
 	if _, err := b.store.RetrieveBindingDetails(bindingID); err != nil {
-		return brokerapi.ErrBindingDoesNotExist
+		return domain.UnbindSpec{}, apiresponses.ErrBindingDoesNotExist
 	}
 
 	if err := b.store.DeleteBindingDetails(bindingID); err != nil {
-		return err
+		return domain.UnbindSpec{}, err
 	}
-	return nil
+	return domain.UnbindSpec{}, nil
 }
 
 func (b *Broker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
 	panic("not implemented")
 }
 
-func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData string) (brokerapi.LastOperation, error) {
+func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData domain.PollDetails) (brokerapi.LastOperation, error) {
 	logger := b.logger.Session("last-operation").WithData(lager.Data{"instanceID": instanceID})
 	logger.Info("start")
 	defer logger.Info("end")
@@ -378,49 +379,10 @@ func (b *Broker) LastOperation(_ context.Context, instanceID string, operationDa
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	switch operationData {
-	case "provision":
-		instance, err := b.store.RetrieveInstanceDetails(instanceID)
-		if err != nil {
-			logger.Info("instance-not-found")
-			return brokerapi.LastOperation{}, brokerapi.ErrInstanceDoesNotExist
-		}
-		logger.Debug("service-instance", lager.Data{"instance": instance})
-
-		efsInstance, err := getFingerprint(logger, instance.ServiceFingerPrint)
-		if err != nil {
-			return brokerapi.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
-		}
-		logger.Debug("efs-instance", lager.Data{"efs-instance": efsInstance})
-
-		if efsInstance.Err != nil {
-			logger.Info(fmt.Sprintf("last-operation-error %#v", efsInstance.Err))
-			return brokerapi.LastOperation{State: brokerapi.Failed, Description: efsInstance.Err.Error()}, nil
-		}
-
-		return stateToLastOperation(efsInstance), nil
-	case "deprovision":
-		instance, err := b.store.RetrieveInstanceDetails(instanceID)
-
-		if err != nil {
-			return brokerapi.LastOperation{State: brokerapi.Succeeded}, nil
-		} else {
-			efsInstance, err := getFingerprint(logger, instance.ServiceFingerPrint)
-			if err != nil {
-				return brokerapi.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
-			}
-			if efsInstance.Err != nil {
-				return brokerapi.LastOperation{State: brokerapi.Failed}, nil
-			} else {
-				return brokerapi.LastOperation{State: brokerapi.InProgress}, nil
-			}
-		}
-	default:
-		return brokerapi.LastOperation{}, errors.New("unrecognized operationData")
-	}
+	return domain.LastOperation{}, errors.New("unrecognized operationData")
 }
 
-//callbacks
+// callbacks
 func (b *Broker) ProvisionEvent(opState *OperationState) {
 	logger := b.logger.Session("provision-event").WithData(lager.Data{"state": opState})
 	logger.Info("start")
@@ -636,4 +598,16 @@ func getFingerprint(logger lager.Logger, rawObject interface{}) (EFSInstance, er
 	}
 
 	return efsInstance, nil
+}
+
+func (b *Broker) GetInstance(ctx context.Context, instanceID string, details domain.FetchInstanceDetails) (domain.GetInstanceDetailsSpec, error) {
+	panic("implement me")
+}
+
+func (b *Broker) LastBindingOperation(ctx context.Context, instanceID, bindingID string, details domain.PollDetails) (domain.LastOperation, error) {
+	panic("implement me")
+}
+
+func (b *Broker) GetBinding(ctx context.Context, instanceID, bindingID string, details domain.FetchBindingDetails) (domain.GetBindingSpec, error) {
+	panic("implement me")
 }

@@ -15,7 +15,7 @@ import (
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/pivotal-cf/brokerapi"
+	"github.com/pivotal-cf/brokerapi/v11"
 )
 
 //go:generate counterfeiter -o efsfakes/fake_operation.go . Operation

@@ -11,7 +11,7 @@ export GOPATH=$BOSH_INSTALL_TARGET
 export PATH=$PATH:$(pwd)
 export INSTALL_DIRECTORY=$(pwd)
 
-pushd ${BOSH_INSTALL_TARGET}/src/code.cloudfoundry.org/efsbroker
+pushd ${BOSH_INSTALL_TARGET}/src/code.cloudfoundry.org/efsbroker/cmd/efsdriver/main.go
   go build -buildvcs=false
   cp efsbroker ${BOSH_INSTALL_TARGET}/bin
 popd

@@ -18,6 +18,7 @@ import (
 	"code.cloudfoundry.org/goshims/filepathshim"
 	"code.cloudfoundry.org/goshims/ioutilshim"
 	"code.cloudfoundry.org/goshims/osshim"
+	"code.cloudfoundry.org/goshims/timeshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
 	"code.cloudfoundry.org/volumedriver"
@@ -125,13 +126,14 @@ func main() {
 	logger.Info("start", lager.Data{"availability-zone": availabilityZone})
 	defer logger.Info("end")
 
-	mounter := efsmounter.NewEfsMounter(invoker.NewRealInvoker(), fsType, mountOptions, *availabilityZone)
+	mounter := efsmounter.NewEfsMounter(invoker.NewProcessGroupInvoker(), fsType, mountOptions, *availabilityZone)
 
 	client := volumedriver.NewVolumeDriver(
 		logger,
 		&osshim.OsShim{},
 		&filepathshim.FilepathShim{},
 		&ioutilshim.IoutilShim{},
+		&timeshim.TimeShim{},
 		mountchecker.NewChecker(&bufioshim.BufioShim{}, &osshim.OsShim{}),
 		*mountDir,
 		mounter,
@@ -243,18 +245,11 @@ func createEfsDriverUnixServer(logger lager.Logger, client dockerdriver.Driver, 
 	return http_server.NewUnixServer(atAddress, handler)
 }
 
-func NewLogger(name string) lager.Logger {
-	logger := lager.NewLogger(name)
+func newLogger() (lager.Logger, *lager.ReconfigurableSink) {
+	lagerConfig := lagerflags.ConfigFromFlags()
+	lagerConfig.RedactSecrets = true
 
-	logLevel := lager.INFO
-	if _, debug := os.LookupEnv("GSB_DEBUG"); debug {
-		logLevel = lager.DEBUG
-	}
-
-	logger.RegisterSink(lager.NewWriterSink(os.Stderr, lager.ERROR))
-	logger.RegisterSink(lager.NewWriterSink(os.Stdout, logLevel))
-
-	return logger
+	return lagerflags.NewFromConfig("efs-driver-server", lagerConfig)
 }
 
 func parseCommandLine() {
