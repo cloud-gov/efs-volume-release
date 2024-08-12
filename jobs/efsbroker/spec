@@ -72,9 +72,9 @@ properties:
     description: "url for credhub"
   efsbroker.credhub.ca:
     description: "credhub CA"
-  efsbroker.uaa.clientid":
+  efsbroker.uaa.clientid:
     description: "uaa clientid"
-  efsbroker.uaa.clientsecret":
+  efsbroker.uaa.clientsecret:
     description: "uaa client secret"
   efsbroker.uaa.ca:
     description: "uaa CA"
