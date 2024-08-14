@@ -199,11 +199,11 @@ func checkParams() {
 		os.Exit(1)
 	}
 
-	if *awsSubnetIds == "" {
-		fmt.Fprint(os.Stderr, "\nERROR: Required parameter awsSubnetIds not defined.\n\n")
-		flag.Usage()
-		os.Exit(1)
-	}
+	// if *awsSubnetIds == "" {
+	// 	fmt.Fprint(os.Stderr, "\nERROR: Required parameter awsSubnetIds not defined.\n\n")
+	// 	flag.Usage()
+	// 	os.Exit(1)
+	// }
 }
 
 func newLogger() (lager.Logger, *lager.ReconfigurableSink) {
