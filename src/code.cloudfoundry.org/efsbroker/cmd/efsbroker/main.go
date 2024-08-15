@@ -295,8 +295,8 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		logger,
 		"", //*credhubURL,
 		"", //*credhubCACert,
-		*uaaClientID,
-		*uaaClientSecret,
+		"", //*uaaClientID,
+		"", //*uaaClientSecret,
 		"", //*uaaCACert,
 		*storeID,
 	)
