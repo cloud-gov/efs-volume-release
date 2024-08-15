@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log/slog"
 	"os"
 	"strings"
@@ -121,8 +122,8 @@ var credhubURL = flag.String(
 	"(optional) CredHub server URL when using CredHub to store broker state",
 )
 
-var credhubCACert = flag.String(
-	"credhubCACert",
+var credhubCACertPath = flag.String(
+	"credhubCACertPath",
 	"",
 	"(optional) CA Cert for CredHub",
 )
@@ -139,8 +140,8 @@ var uaaClientSecret = flag.String(
 	"(optional) UAA client secret when using CredHub to store broker state",
 )
 
-var uaaCACert = flag.String(
-	"uaaCACert",
+var uaaCACertPath = flag.String(
+	"uaaCACertPath",
 	"",
 	"(optional) Path to CA Cert for UAA used for CredHub authorization",
 )
@@ -273,31 +274,31 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
 
-	// var credhubCACert string
-	// if *credhubCACertPath != "" {
-	// 	b, err := ioutil.ReadFile(*credhubCACertPath)
-	// 	if err != nil {
-	// 		logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *credhubCACertPath})
-	// 	}
-	// 	credhubCACert = string(b)
-	// }
+	var credhubCACert string
+	if *credhubCACertPath != "" {
+		b, err := ioutil.ReadFile(*credhubCACertPath)
+		if err != nil {
+			logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *credhubCACertPath})
+		}
+		credhubCACert = string(b)
+	}
 
-	// var uaaCACert string
-	// if *uaaCACertPath != "" {
-	// 	b, err := ioutil.ReadFile(*uaaCACertPath)
-	// 	if err != nil {
-	// 		logger.Fatal("cannot-read-uaa-ca-cert", err, lager.Data{"path": *uaaCACertPath})
-	// 	}
-	// 	uaaCACert = string(b)
-	// }
+	var uaaCACert string
+	if *uaaCACertPath != "" {
+		b, err := ioutil.ReadFile(*uaaCACertPath)
+		if err != nil {
+			logger.Fatal("cannot-read-uaa-ca-cert", err, lager.Data{"path": *uaaCACertPath})
+		}
+		uaaCACert = string(b)
+	}
 
 	store := brokerstore.NewStore(
 		logger,
 		*credhubURL,
-		"", //*credhubCACert,
+		credhubCACert,
 		*uaaClientID,
 		*uaaClientSecret,
-		"", //*uaaCACert,
+		uaaCACert,
 		*storeID,
 	)
 
