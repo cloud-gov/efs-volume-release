@@ -293,10 +293,10 @@ func createServer(logger lager.Logger) ifrit.Runner {
 
 	store := brokerstore.NewStore(
 		logger,
-		"", //*credhubURL,
+		*credhubURL,
 		"", //*credhubCACert,
-		"", //*uaaClientID,
-		"", //*uaaClientSecret,
+		*uaaClientID,
+		*uaaClientSecret,
 		"", //*uaaCACert,
 		*storeID,
 	)
