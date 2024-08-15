@@ -43,8 +43,8 @@ case $1 in
       --credhubURL="<%= p("efsbroker.credhub.url") %>" \
       --uaaClientID="<%= p("efsbroker.uaa.clientid") %>" \
       --uaaClientSecret="<%= p("efsbroker.uaa.clientsecret") %>" \
-      --uaaCACert="<%= p("efsbroker.uaa.ca") %>" \
-      --credhubCACert="<%= p("efsbroker.credhub.ca") %>" \
+      --uaaCACertPath="<%= p("efsbroker.uaa.ca") %>" \
+      --credhubCACertPath="<%= p("efsbroker.credhub.ca") %>" \
       --dbPort="<%= p("efsbroker.db_port") %>" \
       --dbName="<%= p("efsbroker.db_name") %>" \
       --dbCACertPath=/var/vcap/jobs/efsbroker/db_ca.crt \
