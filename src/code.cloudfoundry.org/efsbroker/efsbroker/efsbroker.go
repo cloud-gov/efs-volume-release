@@ -371,15 +371,54 @@ func (b *Broker) Update(context context.Context, instanceID string, details brok
 	panic("not implemented")
 }
 
-func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData domain.PollDetails) (brokerapi.LastOperation, error) {
+func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData string) (brokerapi.LastOperation, error) {
 	logger := b.logger.Session("last-operation").WithData(lager.Data{"instanceID": instanceID})
 	logger.Info("start")
 	defer logger.Info("end")
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+	switch operationData {
+	case "provision":
+		instance, err := b.store.RetrieveInstanceDetails(instanceID)
+		if err != nil {
+			logger.Info("instance-not-found")
+			return brokerapi.LastOperation{}, brokerapi.ErrInstanceDoesNotExist
+		}
+		logger.Debug("service-instance", lager.Data{"instance": instance})
 
-	return domain.LastOperation{}, errors.New("unrecognized operationData")
+		efsInstance, err := getFingerprint(logger, instance.ServiceFingerPrint)
+		if err != nil {
+			return brokerapi.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
+		}
+		logger.Debug("efs-instance", lager.Data{"efs-instance": efsInstance})
+
+		if efsInstance.Err != nil {
+			logger.Info(fmt.Sprintf("last-operation-error %#v", efsInstance.Err))
+			return brokerapi.LastOperation{State: brokerapi.Failed, Description: efsInstance.Err.Error()}, nil
+		}
+
+		return stateToLastOperation(efsInstance), nil
+	case "deprovision":
+		instance, err := b.store.RetrieveInstanceDetails(instanceID)
+
+		if err != nil {
+			return brokerapi.LastOperation{State: brokerapi.Succeeded}, nil
+		} else {
+			efsInstance, err := getFingerprint(logger, instance.ServiceFingerPrint)
+			if err != nil {
+				return brokerapi.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
+			}
+			if efsInstance.Err != nil {
+				return brokerapi.LastOperation{State: brokerapi.Failed}, nil
+			} else {
+				return brokerapi.LastOperation{State: brokerapi.InProgress}, nil
+			}
+		}
+	default:
+		return brokerapi.LastOperation{}, errors.New("unrecognized operationData")
+	}
+
 }
 
 // callbacks
