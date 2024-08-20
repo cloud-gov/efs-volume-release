@@ -127,14 +127,14 @@ var credhubCACert = flag.String(
 	"(optional) CA Cert for CredHub",
 )
 
-var uaaClientID = flag.String(
-	"uaaClientID",
+var credhubClientID = flag.String(
+	"credhubClientID",
 	"",
 	"(optional) UAA client ID when using CredHub to store broker state",
 )
 
-var uaaClientSecret = flag.String(
-	"uaaClientSecret",
+var credhubClientSecret = flag.String(
+	"credhubClientSecret",
 	"",
 	"(optional) UAA client secret when using CredHub to store broker state",
 )
@@ -147,7 +147,7 @@ var uaaCACert = flag.String(
 
 var storeID = flag.String(
 	"storeID",
-	"nfsbroker",
+	"efsbroker",
 	"(optional) Store ID used to namespace instance details and bindings (credhub only)",
 )
 
@@ -295,8 +295,8 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		logger,
 		*credhubURL,
 		*credhubCACert,
-		*uaaClientID,
-		*uaaClientSecret,
+		*credhubClientID,
+		*credhubClientSecret,
 		*uaaCACert,
 		*storeID,
 	)
