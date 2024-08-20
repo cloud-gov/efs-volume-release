@@ -371,14 +371,14 @@ func (b *Broker) Update(context context.Context, instanceID string, details brok
 	panic("not implemented")
 }
 
-func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData string) (brokerapi.LastOperation, error) {
+func (b *Broker) LastOperation(_ context.Context, instanceID string, operationData domain.PollDetails) (brokerapi.LastOperation, error) {
 	logger := b.logger.Session("last-operation").WithData(lager.Data{"instanceID": instanceID})
 	logger.Info("start")
 	defer logger.Info("end")
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	switch operationData {
+	switch operationData.OperationData {
 	case "provision":
 		instance, err := b.store.RetrieveInstanceDetails(instanceID)
 		if err != nil {
