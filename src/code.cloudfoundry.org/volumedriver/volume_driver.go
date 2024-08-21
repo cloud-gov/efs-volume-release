@@ -78,7 +78,7 @@ func (d *VolumeDriver) Create(env dockerdriver.Env, createRequest dockerdriver.C
 	}
 
 	var ok bool
-	if _, ok = createRequest.Opts["source"].(string); !ok {
+	if _, ok = createRequest.Opts["ip"].(string); !ok {
 		logger.Info("mount-config-missing-source", lager.Data{"volume_name": createRequest.Name})
 		return dockerdriver.ErrorResponse{Err: `Missing mandatory 'source' field in 'Opts'`}
 	}
@@ -349,7 +349,7 @@ func (d *VolumeDriver) mountPath(env dockerdriver.Env, volumeId string) string {
 }
 
 func (d *VolumeDriver) mount(env dockerdriver.Env, opts map[string]interface{}, mountPath string) error {
-	source, sourceOk := opts["source"].(string)
+	source, sourceOk := Opts["ip"].(string)
 	logger := env.Logger().Session("mount", lager.Data{"source": source, "target": mountPath})
 	logger.Info("start")
 	defer logger.Info("end")
