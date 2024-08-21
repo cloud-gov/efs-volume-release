@@ -139,7 +139,8 @@ func (d *VolumeDriver) Mount(env dockerdriver.Env, mountRequest dockerdriver.Mou
 	mountPath := d.mountPath(driverhttp.EnvWithLogger(logger, env), volume.Name)
 	volume.Mountpoint = mountPath
 	logger.Info("mounting-volume", lager.Data{"id": volume.Name, "mountpoint": mountPath})
-	logger.Info("mount-source", lager.Data{"source": volume.Opts["source"].(string)})
+	// Checking for IP  source no longer is an opts
+	logger.Info("mount-source", lager.Data{"source": volume.Opts["ip"].(string)})
 
 	doMount := volume.MountCount < 1
 	volume.MountCount++

@@ -40,7 +40,7 @@ func EnvWithContext(ctx context.Context, env dockerdriver.Env) dockerdriver.Env 
 }
 
 func EnvWithMonitor(logger lager.Logger, ctx context.Context, res http.ResponseWriter) dockerdriver.Env {
-	logger = logger.Session("with-cancel")
+	logger = logger.Session("with-cancel-volume")
 	logger.Debug("start")
 	defer logger.Debug("end")
 
