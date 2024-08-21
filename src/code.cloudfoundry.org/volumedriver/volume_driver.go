@@ -407,7 +407,7 @@ func (d *VolumeDriver) persistState(env dockerdriver.Env) error {
 }
 
 func (d *VolumeDriver) restoreState(env dockerdriver.Env) {
-	logger := env.Logger().Session("restore-state")
+	logger := env.Logger().Session("restore-volume-state")
 	logger.Info("start")
 	defer logger.Info("end")
 

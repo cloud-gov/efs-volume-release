@@ -44,4 +44,8 @@ echo "Installed efsdriver path"
 echo "Copying client certs to data directory..."
 copy_client_certs_to_spec_dir
 
+MOUNT_DIR=<%= p("efsdriver.cell_mount_path") %>
+chown vcap:vcap $MOUNT_DIR
+echo "chown of cell_mount_path"
+
 exit 0
