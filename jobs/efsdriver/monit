@@ -1,5 +1,5 @@
 check process efsdriver
   with pidfile /var/vcap/sys/run/efsdriver/efsdriver.pid
-  start program "/var/vcap/jobs/efsdriver/bin/efsdriver_ctl start"
-  stop program "/var/vcap/jobs/efsdriver/bin/efsdriver_ctl stop"
+  start program "/var/vcap/jobs/bpm/bin/bpm start efsdriver"
+  stop program "/var/vcap/jobs/bpm/bin/bpm stop efsdriver"
   group vcap
