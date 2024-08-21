@@ -8,6 +8,11 @@ RUN_DIR=/var/vcap/sys/run/efsdriver
 LOG_DIR=/var/vcap/sys/log/efsdriver
 PIDFILE=$RUN_DIR/efsdriver.pid
 
+SCRIPT=$(basename $0)
+
+exec 1>> /var/vcap/sys/log/monit/${SCRIPT}.log
+exec 2>> /var/vcap/sys/log/monit/${SCRIPT}.err.log
+
 case $1 in
   start)
     mkdir -p $RUN_DIR
