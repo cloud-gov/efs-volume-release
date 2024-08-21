@@ -2,6 +2,7 @@
 name: efsdriver
 
 templates:
+  bpm.yml.erb: config/bpm.yml
   install.erb: bin/pre-start
   ctl.erb: bin/efsdriver_ctl
   ca.crt.erb: config/certs/ca.crt

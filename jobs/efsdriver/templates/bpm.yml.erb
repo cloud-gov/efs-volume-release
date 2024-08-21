@@ -1,0 +1,8 @@
+processes:
+  - name: efsdriver
+    hooks:
+      pre_start: /var/vcap/jobs/efsdriver/bin/pre-start
+    executable: /var/vcap/jobs/efsdriver/bin/efsdriver_ctl
+    additional_volumes:
+    - path: /var/vcap/data/volumes/efs
+      writable: true
