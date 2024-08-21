@@ -37,7 +37,7 @@ fi
 
 DATA_DIR=<%= p("efsdriver.driver_path") %>
 mkdir -p $DATA_DIR
-chown vcap:vcap $DATA_DIR
+chown -R vcap:vcap $DATA_DIR
 
 echo "Installed efsdriver path"
 
