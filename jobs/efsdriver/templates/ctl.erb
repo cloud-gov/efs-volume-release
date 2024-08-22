@@ -56,9 +56,6 @@ case $1 in
       --clientKeyFile="${CLIENT_CERTS_DIR}/client.key" \
       ${ENABLE_INSECURE_SKIP_VERIFY} \
       <% end %>\
-      <% if p("efsdriver.enable_unique_volume_ids") %> \
-      --uniqueVolumeIds \
-      <% end %> \
       --debugAddr="<%= p("efsdriver.debug_addr") %>" \
       --adminAddr="<%= p("efsdriver.admin_addr") %>" \
       --driversPath="<%= p("efsdriver.driver_path") %>" \

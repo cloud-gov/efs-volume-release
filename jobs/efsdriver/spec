@@ -40,9 +40,6 @@ properties:
   efsdriver.log_time_format:
     description: "Format for timestamp in component logs. Valid values are 'unix-epoch' and 'rfc3339'."
     default: "rfc3339"
-  efsdriver.enable_unique_volume_ids:
-    description: "opt-in to unique volume IDs"
-    default: true
   efsdriver.tls.ca_cert:
     description: "PEM encoded CA certificate. If not provided, driver will not accept TLS connections"
     default: ""
