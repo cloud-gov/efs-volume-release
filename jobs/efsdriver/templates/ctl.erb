@@ -22,6 +22,12 @@ case $1 in
     mkdir -p $LOG_DIR
     chown -R vcap:vcap $LOG_DIR
 
+    mkdir -p /var/vcap/data/voldrivers
+    chmod 777 /var/vcap/data/voldrivers
+
+    mkdir -p "<%= p("efsdriver.cell_mount_path") %>"
+    chown vcap:vcap "<%= p("efsdriver.cell_mount_path") %>"
+
     echo $$ > $PIDFILE
 
     # Allowed number of open file descriptors
