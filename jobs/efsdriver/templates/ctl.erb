@@ -22,22 +22,21 @@ case $1 in
     mkdir -p $LOG_DIR
     chown -R vcap:vcap $LOG_DIR
 
-    mkdir -p /var/vcap/data/voldrivers
-    chmod 777 /var/vcap/data/voldrivers
-
-    mkdir -p "<%= p("efsdriver.cell_mount_path") %>"
-    chown vcap:vcap "<%= p("efsdriver.cell_mount_path") %>"
-
     echo $$ > $PIDFILE
 
+    # ldap connection and credential info are passed via environment
+    export LDAP_SVC_USER='<%= p("efsdriver.ldap_svc_user").gsub("'", "'\"'\"'") %>'
+    export LDAP_SVC_PASS='<%= p("efsdriver.ldap_svc_password").gsub("'", "'\"'\"'") %>'
+    export LDAP_HOST="<%= p("efsdriver.ldap_host") %>"
+    export LDAP_PORT="<%= p("efsdriver.ldap_port") %>"
+    export LDAP_PROTO="<%= p("efsdriver.ldap_proto") %>"
+    export LDAP_USER_FQDN="<%= p("efsdriver.ldap_user_fqdn") %>"
+    export LDAP_CA_CERT="<%= p("efsdriver.ldap_ca_cert") %>"
     # Allowed number of open file descriptors
     ulimit -n 100000
 
     # volume drivers need to create directories with 777 so container users can see them
     umask 0
-
-    # fetch the AZ for this cell from EC2
-    CELL_AZ=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 
     ENABLE_INSECURE_SKIP_VERIFY=""
     <% if p("efsdriver.ssl.insecure_skip_verify") %>
@@ -61,11 +60,12 @@ case $1 in
       --uniqueVolumeIds \
       <% end %> \
       --debugAddr="<%= p("efsdriver.debug_addr") %>" \
+      --adminAddr="<%= p("efsdriver.admin_addr") %>" \
       --driversPath="<%= p("efsdriver.driver_path") %>" \
       --mountDir="<%= p("efsdriver.cell_mount_path") %>" \
       --logLevel="<%= p("efsdriver.log_level") %>" \
       --timeFormat="<%= p("efsdriver.log_time_format") %>" \
-      --availabilityZone="$CELL_AZ" \
+      --mapfsPath="<%= link("mapfs").p("path") %>" \
       2> >(tee -a $LOG_DIR/efsdriver.stderr.log | logger -p user.error -t vcap.efsdriver) \
       1> >(tee -a $LOG_DIR/efsdriver.stdout.log | logger -p user.info -t vcap.efsdriver)
     ;;

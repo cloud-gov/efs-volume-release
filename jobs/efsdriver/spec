@@ -14,6 +14,10 @@ packages:
 - efs-nfs-debs
 - efsdriver
 
+consumes:
+- name: mapfs
+  type: mapfs
+
 properties:
   efsdriver.listen_addr:
     description: "address efsdriver listens on"
@@ -77,3 +81,32 @@ properties:
   efsdriver.ssl.insecure_skip_verify:
     description: "When connecting over SSL, skip verification of server IP addresses in the certificate"
     default: false
+  efsdriver.ldap_svc_user:
+    description: "ldap service account user name (required for LDAP integration only)"
+    default: ""
+  efsdriver.ldap_svc_password:
+    description: "ldap service account password (required for LDAP integration only)"
+    default: ""
+  efsdriver.ldap_host:
+    description: "ldap server host name or ip address (required for LDAP integration only)"
+    default: ""
+  efsdriver.ldap_port:
+    description: "ldap server port (required for LDAP integration only)"
+    default: 389
+  efsdriver.ldap_proto:
+    description: "ldap server protocol (required for LDAP integration only)"
+    default: tcp
+  efsdriver.ldap_user_fqdn:
+    description: "ldap fqdn for user records we will search against when looking up user uids (required for LDAP integration only)"
+    example: "cn=Users,dc=corp,dc=test,dc=com"
+    default: ""
+  efsdriver.ldap_ca_cert:
+    description: "ldap server CA certificate. If not provided driver will be connecting to LDAP server without TLS"
+    example: "|
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----"
+    default: ""
+  efsdriver.admin_addr:
+    description: "address efsdriver listens on for admin requests"
+    default: "127.0.0.1:7590"
