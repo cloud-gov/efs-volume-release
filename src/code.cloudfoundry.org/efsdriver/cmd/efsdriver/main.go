@@ -15,7 +15,6 @@ import (
 	"code.cloudfoundry.org/efsdriver/driveradmin/driveradminhttp"
 	"code.cloudfoundry.org/efsdriver/driveradmin/driveradminlocal"
 	"code.cloudfoundry.org/efsdriver/efsmounter"
-	"code.cloudfoundry.org/efsdriver/efsvoltools"
 	"code.cloudfoundry.org/goshims/bufioshim"
 	"code.cloudfoundry.org/goshims/filepathshim"
 	"code.cloudfoundry.org/goshims/ioutilshim"
@@ -187,9 +186,9 @@ func main() {
 	)
 
 	if *transport == "tcp" {
-		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, false, *efsVolToolsAddress, false)
+		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, false)
 	} else if *transport == "tcp-json" {
-		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, true, *efsVolToolsAddress, *uniqueVolumeIds)
+		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, true)
 	} else {
 		efsDriverServer = createEfsDriverUnixServer(logger, client, *atAddress)
 	}
@@ -237,11 +236,11 @@ func processRunnerFor(servers grouper.Members) ifrit.Runner {
 	return sigmon.New(grouper.NewOrdered(os.Interrupt, servers))
 }
 
-func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, efsvoltools efsvoltools.VolTools, atAddress, driversPath string, jsonSpec bool, efsToolsAddress string, uniqueVolumeIds bool) ifrit.Runner {
+func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, atAddress, driversPath string, jsonSpec bool) ifrit.Runner {
 	advertisedUrl := "http://" + atAddress
-	logger.Info("writing-spec-file", lager.Data{"location": driversPath, "name": "efsdriver", "address": advertisedUrl, "unique-volume-ids": uniqueVolumeIds})
+	logger.Info("writing-spec-file", lager.Data{"location": driversPath, "name": "efsdriver", "address": advertisedUrl})
 	if jsonSpec {
-		driverJsonSpec := dockerdriver.DriverSpec{Name: "efsdriver", Address: advertisedUrl, UniqueVolumeIds: uniqueVolumeIds}
+		driverJsonSpec := dockerdriver.DriverSpec{Name: "efsdriver", Address: advertisedUrl}
 
 		if *requireSSL {
 			absCaFile, err := filepath.Abs(*caFile)
