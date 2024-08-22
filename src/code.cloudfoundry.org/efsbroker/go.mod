@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/efsbroker
 
-go 1.22.3
+go 1.22.6
 
 replace code.cloudfoundry.org/efsdriver v0.0.0-20190712220027-6639a67b5d72 => ../efsdriver
 
@@ -16,6 +16,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.34.1
 	github.com/pivotal-cf/brokerapi v6.4.2+incompatible
+	github.com/pivotal-cf/brokerapi/v11 v11.0.0
 	github.com/tedsuo/ifrit v0.0.0-20230516164442-7862c310ad26
 )
 
@@ -25,6 +26,7 @@ require (
 	code.cloudfoundry.org/credhub-cli v0.0.0-20240429130629-19663e8d3d05 // indirect
 	code.cloudfoundry.org/lager v2.0.0+incompatible // indirect
 	code.cloudfoundry.org/tlsconfig v0.0.0-20240522170710-79df114af82a // indirect
+	code.cloudfoundry.org/volume-mount-options v0.95.0 // indirect
 	code.cloudfoundry.org/volumedriver v0.96.0 // indirect
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
@@ -43,7 +45,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.20.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/pivotal-cf/brokerapi/v11 v11.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tedsuo/rata v1.0.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
@@ -52,6 +53,8 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
+	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
+	gopkg.in/ldap.v2 v2.5.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
