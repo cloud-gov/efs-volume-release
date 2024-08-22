@@ -5,19 +5,23 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	cf_http "code.cloudfoundry.org/cfhttp"
 	cf_debug_server "code.cloudfoundry.org/debugserver"
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
+	"code.cloudfoundry.org/efsdriver/driveradmin/driveradminhttp"
+	"code.cloudfoundry.org/efsdriver/driveradmin/driveradminlocal"
 	"code.cloudfoundry.org/efsdriver/efsmounter"
 	"code.cloudfoundry.org/efsdriver/efsvoltools"
-	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolshttp"
-	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolslocal"
 	"code.cloudfoundry.org/goshims/bufioshim"
 	"code.cloudfoundry.org/goshims/filepathshim"
 	"code.cloudfoundry.org/goshims/ioutilshim"
+	"code.cloudfoundry.org/goshims/ldapshim"
 	"code.cloudfoundry.org/goshims/osshim"
+	"code.cloudfoundry.org/goshims/syscallshim"
 	"code.cloudfoundry.org/goshims/timeshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
@@ -37,6 +41,12 @@ var atAddress = flag.String(
 	"host:port to serve volume management functions",
 )
 
+var adminAddress = flag.String(
+	"adminAddr",
+	"127.0.0.1:7590",
+	"host:port to serve process admin functions",
+)
+
 var efsVolToolsAddress = flag.String(
 	"efsVolToolsAddr",
 	"",
@@ -54,7 +64,11 @@ var transport = flag.String(
 	"tcp",
 	"Transport protocol to transmit HTTP over",
 )
-
+var mapfsPath = flag.String(
+	"mapfsPath",
+	"/var/vcap/packages/mapfs/bin/mapfs",
+	"Path to the mapfs binary",
+)
 var mountDir = flag.String(
 	"mountDir",
 	"/tmp/volumes",
@@ -96,37 +110,69 @@ var clientKeyFile = flag.String(
 	"the private key file to use with client ssl authentication",
 )
 
-var availabilityZone = flag.String(
-	"availabilityZone",
-	"",
-	"the EC2 AZ that this driver is running in",
-)
-
 var insecureSkipVerify = flag.Bool(
 	"insecureSkipVerify",
 	false,
 	"whether SSL communication should skip verification of server IP addresses in the certificate",
 )
 
-var uniqueVolumeIds = flag.Bool(
-	"uniqueVolumeIds",
-	false,
-	"whether the EFS driver should opt-in to unique volumes",
-)
-
 const fsType = "nfs4"
-const mountOptions = "vers=4.0,rsize=1048576,wsize=1048576,timeo=600,retrans=2,actimeo=0"
+const mountOptions = "vers=4.0,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,actimeo=0"
+
+var (
+	ldapSvcUser  string
+	ldapSvcPass  string
+	ldapUserFqdn string
+	ldapHost     string
+	ldapPort     int
+	ldapCACert   string
+	ldapProto    string
+	ldapTimeout  int
+)
 
 func main() {
 	parseCommandLine()
+	parseEnvironment()
 
-	var localDriverServer ifrit.Runner
+	var efsDriverServer ifrit.Runner
+	var idResolver efsmounter.IdResolver
+	var mounter volumedriver.Mounter
 
 	logger, logTap := newLogger()
-	logger.Info("start", lager.Data{"availability-zone": availabilityZone})
+	logger.Info("start")
 	defer logger.Info("end")
 
-	mounter := efsmounter.NewEfsMounter(invoker.NewProcessGroupInvoker(), fsType, mountOptions, *availabilityZone)
+	if ldapHost != "" {
+		idResolver = efsmounter.NewLdapIdResolver(
+			ldapSvcUser,
+			ldapSvcPass,
+			ldapHost,
+			ldapPort,
+			ldapProto,
+			ldapUserFqdn,
+			ldapCACert,
+			&ldapshim.LdapShim{},
+			time.Duration(ldapTimeout)*time.Second,
+		)
+	}
+	mask, err := efsmounter.NewMapFsVolumeMountMask()
+	if err != nil {
+		exitOnFailure(logger, err)
+	}
+	processGroupInvoker := invoker.NewProcessGroupInvoker()
+
+	mounter = efsmounter.NewEfsMounter(
+		processGroupInvoker,
+		&osshim.OsShim{},
+		&syscallshim.SyscallShim{},
+		&ioutilshim.IoutilShim{},
+		mountchecker.NewChecker(&bufioshim.BufioShim{}, &osshim.OsShim{}),
+		fsType,
+		mountOptions,
+		idResolver,
+		mask,
+		*mapfsPath,
+	)
 
 	client := volumedriver.NewVolumeDriver(
 		logger,
@@ -140,24 +186,16 @@ func main() {
 		oshelper.NewOsHelper(),
 	)
 
-	efsvoltools := voltoolslocal.NewEfsVolToolsLocal(
-		&osshim.OsShim{},
-		&filepathshim.FilepathShim{},
-		&ioutilshim.IoutilShim{},
-		*mountDir,
-		mounter,
-	)
-
 	if *transport == "tcp" {
-		localDriverServer = createEfsDriverServer(logger, client, efsvoltools, *atAddress, *driversPath, false, *efsVolToolsAddress, false)
+		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, false, *efsVolToolsAddress, false)
 	} else if *transport == "tcp-json" {
-		localDriverServer = createEfsDriverServer(logger, client, efsvoltools, *atAddress, *driversPath, true, *efsVolToolsAddress, *uniqueVolumeIds)
+		efsDriverServer = createEfsDriverServer(logger, client, *atAddress, *driversPath, true, *efsVolToolsAddress, *uniqueVolumeIds)
 	} else {
-		localDriverServer = createEfsDriverUnixServer(logger, client, *atAddress)
+		efsDriverServer = createEfsDriverUnixServer(logger, client, *atAddress)
 	}
 
 	servers := grouper.Members{
-		{Name: "localdriver-server", Runner: localDriverServer},
+		{Name: "localdriver-server", Runner: efsDriverServer},
 	}
 
 	if dbgAddr := cf_debug_server.DebugAddress(flag.CommandLine); dbgAddr != "" {
@@ -166,8 +204,19 @@ func main() {
 		}, servers...)
 	}
 
+	adminClient := driveradminlocal.NewDriverAdminLocal()
+	adminHandler, _ := driveradminhttp.NewHandler(logger, adminClient)
+	adminServer := http_server.New(*adminAddress, adminHandler)
+
+	servers = append(grouper.Members{
+		{Name: "driveradmin", Runner: adminServer},
+	}, servers...)
+
 	process := ifrit.Invoke(processRunnerFor(servers))
 	logger.Info("started")
+
+	adminClient.SetServerProc(process)
+	adminClient.RegisterDrainable(client)
 
 	untilTerminated(logger, process)
 }
@@ -229,13 +278,6 @@ func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, efsv
 		server = http_server.New(atAddress, handler)
 	}
 
-	if efsToolsAddress != "" {
-		efsToolsHandler, err := voltoolshttp.NewHandler(logger, efsvoltools)
-		exitOnFailure(logger, err)
-		efsServer := http_server.New(efsToolsAddress, efsToolsHandler)
-		server = grouper.NewParallel(os.Interrupt, grouper.Members{{Name: "dockerdriver", Runner: server}, {Name: "efstools", Runner: efsServer}})
-	}
-
 	return server
 }
 
@@ -256,4 +298,34 @@ func parseCommandLine() {
 	lagerflags.AddFlags(flag.CommandLine)
 	cf_debug_server.AddFlags(flag.CommandLine)
 	flag.Parse()
+}
+
+func parseEnvironment() {
+	ldapSvcUser, _ = os.LookupEnv("LDAP_SVC_USER")
+	ldapSvcPass, _ = os.LookupEnv("LDAP_SVC_PASS")
+	ldapUserFqdn, _ = os.LookupEnv("LDAP_USER_FQDN")
+	ldapHost, _ = os.LookupEnv("LDAP_HOST")
+	port, _ := os.LookupEnv("LDAP_PORT")
+	ldapPort, _ = strconv.Atoi(port)
+	ldapCACert, _ = os.LookupEnv("LDAP_CA_CERT")
+	ldapProto, _ = os.LookupEnv("LDAP_PROTO")
+	timeout, _ := os.LookupEnv("LDAP_TIMEOUT")
+	ldapTimeout, _ = strconv.Atoi(timeout)
+
+	if ldapProto == "" {
+		ldapProto = "tcp"
+	}
+
+	if ldapHost != "" && (ldapSvcUser == "" || ldapSvcPass == "" || ldapUserFqdn == "" || ldapPort == 0) {
+		panic("LDAP is enabled but required LDAP parameters are not set.")
+	}
+
+	if ldapTimeout < 0 {
+		panic("LDAP_TIMEOUT is set to negtive value")
+	}
+
+	// if ldapTimeout is not set, use default value
+	if ldapTimeout == 0 {
+		ldapTimeout = 120
+	}
 }
