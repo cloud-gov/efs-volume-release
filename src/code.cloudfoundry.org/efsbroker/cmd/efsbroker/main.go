@@ -37,7 +37,7 @@ var dataDir = flag.String(
 
 var atAddress = flag.String(
 	"listenAddr",
-	"0.0.0.0:8999",
+	"0.0.0.0:7589",
 	"host:port to serve service broker API",
 )
 var efsToolsAddress = flag.String(
