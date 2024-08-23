@@ -46,12 +46,6 @@ var adminAddress = flag.String(
 	"host:port to serve process admin functions",
 )
 
-var efsVolToolsAddress = flag.String(
-	"efsVolToolsAddr",
-	"",
-	"host:port to serve efs volume tools functions (for drivers colocated with the efs broker)",
-)
-
 var driversPath = flag.String(
 	"driversPath",
 	"",

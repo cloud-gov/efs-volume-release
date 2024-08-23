@@ -7,17 +7,19 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/debugserver"
 	"code.cloudfoundry.org/efsbroker/efsbroker"
 	"code.cloudfoundry.org/efsbroker/utils"
-	"code.cloudfoundry.org/efsdriver/efsvoltools/voltoolshttp"
 	"code.cloudfoundry.org/goshims/osshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
+	vmo "code.cloudfoundry.org/volume-mount-options"
+	vmou "code.cloudfoundry.org/volume-mount-options/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
@@ -113,6 +115,24 @@ var awsSecurityGroups = flag.String(
 	"awsSecurityGroups",
 	"",
 	"list of comma separated aws security groups to assign to the mount points (one per subnet id)",
+)
+
+var allowedOptions = flag.String(
+	"allowedOptions",
+	"auto_cache,uid,gid",
+	"A comma separated list of parameters allowed to be set in config.",
+)
+
+var defaultOptions = flag.String(
+	"defaultOptions",
+	"auto_cache:true",
+	"A comma separated list of defaults specified as param:value. If a parameter has a default value and is not in the allowed list, this default value becomes a fixed value that cannot be overridden",
+)
+
+var servicesConfig = flag.String(
+	"servicesConfig",
+	"",
+	"[REQUIRED] - Path to services config to register with cloud controller",
 )
 
 var credhubURL = flag.String(
@@ -273,24 +293,6 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
 
-	// var credhubCACert string
-	// if *credhubCACertPath != "" {
-	// 	b, err := ioutil.ReadFile(*credhubCACertPath)
-	// 	if err != nil {
-	// 		logger.Fatal("cannot-read-credhub-ca-cert", err, lager.Data{"path": *credhubCACertPath})
-	// 	}
-	// 	credhubCACert = string(b)
-	// }
-
-	// var uaaCACert string
-	// if *uaaCACertPath != "" {
-	// 	b, err := ioutil.ReadFile(*uaaCACertPath)
-	// 	if err != nil {
-	// 		logger.Fatal("cannot-read-uaa-ca-cert", err, lager.Data{"path": *uaaCACertPath})
-	// 	}
-	// 	uaaCACert = string(b)
-	// }
-
 	store := brokerstore.NewStore(
 		logger,
 		*credhubURL,
@@ -301,14 +303,25 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		*storeID,
 	)
 
+	cacheOptsValidator := vmo.UserOptsValidationFunc(validateCache)
+	configMask, err := vmo.NewMountOptsMask(
+		strings.Split(*allowedOptions, ","),
+		vmou.ParseOptionStringToMap(*defaultOptions, ":"),
+		map[string]string{
+			"share": "source",
+		},
+		[]string{},
+		[]string{"source"},
+		cacheOptsValidator,
+	)
+	if err != nil {
+		logger.Fatal("creating-config-mask-error", err)
+	}
+	logger.Debug("efsbroker-startup-config", lager.Data{"config-mask": configMask})
+
 	config := aws.NewConfig()
 
 	efsClient := efs.New(session, config)
-
-	efsTools, err := voltoolshttp.NewRemoteClient("http://" + *efsToolsAddress)
-	if err != nil {
-		panic(err)
-	}
 
 	subnets := parseSubnets()
 
@@ -320,10 +333,27 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		&osshim.OsShim{},
 		clock.NewClock(),
 		store,
-		efsClient, subnets, efsTools, efsbroker.NewProvisionOperation, efsbroker.NewDeprovisionOperation)
+		efsClient,
+		subnets,
+		efsbroker.NewProvisionOperation,
+		efsbroker.NewDeprovisionOperation)
 
 	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
 	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)
+}
+
+func validateCache(key string, val string) error {
+
+	if key != "cache" {
+		return nil
+	}
+
+	_, err := strconv.ParseBool(val)
+	if err != nil {
+		return errors.New(fmt.Sprintf("%s is not a valid value for cache", val))
+	}
+
+	return nil
 }

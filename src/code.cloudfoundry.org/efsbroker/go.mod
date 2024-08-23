@@ -9,9 +9,11 @@ require (
 	code.cloudfoundry.org/debugserver v0.0.0-20240808182508-aa80400f8069
 	code.cloudfoundry.org/dockerdriver v0.0.0-20240620154825-441e44b5dbb3
 	code.cloudfoundry.org/efsdriver v0.0.0-20190712220027-6639a67b5d72
+	code.cloudfoundry.org/existingvolumebroker v0.140.0
 	code.cloudfoundry.org/goshims v0.38.0
 	code.cloudfoundry.org/lager/v3 v3.0.3
 	code.cloudfoundry.org/service-broker-store v0.87.0
+	code.cloudfoundry.org/volume-mount-options v0.95.0
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.34.1
@@ -26,7 +28,6 @@ require (
 	code.cloudfoundry.org/credhub-cli v0.0.0-20240429130629-19663e8d3d05 // indirect
 	code.cloudfoundry.org/lager v2.0.0+incompatible // indirect
 	code.cloudfoundry.org/tlsconfig v0.0.0-20240522170710-79df114af82a // indirect
-	code.cloudfoundry.org/volume-mount-options v0.95.0 // indirect
 	code.cloudfoundry.org/volumedriver v0.96.0 // indirect
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect

@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/efsdriver/efsvoltools"
 	"code.cloudfoundry.org/goshims/osshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
@@ -77,8 +76,7 @@ type Broker struct {
 	os                   osshim.Os
 	mutex                lock
 	clock                clock.Clock
-	efsTools             efsvoltools.VolTools
-	ProvisionOperation   func(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, efsTools efsvoltools.VolTools, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation
+	ProvisionOperation   func(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation
 	DeprovisionOperation func(logger lager.Logger, efsService EFSService, clock Clock, spec DeprovisionOperationSpec, updateCb func(*OperationState)) Operation
 
 	static staticState
@@ -92,8 +90,7 @@ func New(
 	clock clock.Clock,
 	store brokerstore.Store,
 	efsService EFSService, subnets []Subnet,
-	efsTools efsvoltools.VolTools,
-	provisionOperation func(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, efsTools efsvoltools.VolTools, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation,
+	provisionOperation func(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation,
 	deprovisionOperation func(logger lager.Logger, efsService EFSService, clock Clock, spec DeprovisionOperationSpec, updateCb func(*OperationState)) Operation,
 ) *Broker {
 
@@ -106,7 +103,6 @@ func New(
 		mutex:                &sync.Mutex{},
 		clock:                clock,
 		store:                store,
-		efsTools:             efsTools,
 		ProvisionOperation:   provisionOperation,
 		DeprovisionOperation: deprovisionOperation,
 		static: staticState{
@@ -185,7 +181,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details b
 		return brokerapi.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details %s", instanceID)
 	}
 
-	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.efsTools, b.subnets, b.clock, b.ProvisionEvent)
+	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
 
 	go operation.Execute()
 

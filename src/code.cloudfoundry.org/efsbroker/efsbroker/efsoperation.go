@@ -8,10 +8,6 @@ import (
 
 	"strings"
 
-	"context"
-
-	"code.cloudfoundry.org/dockerdriver/driverhttp"
-	"code.cloudfoundry.org/efsdriver/efsvoltools"
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/efs"
@@ -70,15 +66,14 @@ type OperationState struct {
 	Err               *OperationStateErr
 }
 
-func NewProvisionOperation(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, efsTools efsvoltools.VolTools, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation {
-	return NewProvisionStateMachine(logger, instanceID, details, efsService, efsTools, subnets, clock, updateCb)
+func NewProvisionOperation(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation {
+	return NewProvisionStateMachine(logger, instanceID, details, efsService, subnets, clock, updateCb)
 }
 
-func NewProvisionStateMachine(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, efsTools efsvoltools.VolTools, subnets []Subnet, clock Clock, updateCb func(*OperationState)) *ProvisionOperationStateMachine {
+func NewProvisionStateMachine(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) *ProvisionOperationStateMachine {
 	return &ProvisionOperationStateMachine{
 		details,
 		efsService,
-		efsTools,
 		subnets,
 		logger,
 		clock,
@@ -99,7 +94,6 @@ func NewProvisionStateMachine(logger lager.Logger, instanceID string, details br
 type ProvisionOperationStateMachine struct {
 	details         brokerapi.ProvisionDetails
 	efsService      EFSService
-	efsTools        efsvoltools.VolTools
 	subnets         []Subnet
 	logger          lager.Logger
 	clock           Clock
@@ -140,10 +134,10 @@ func (o *ProvisionOperationStateMachine) Execute() {
 		return
 	}
 
-	err = o.OpenPerms()
-	if err != nil {
-		return
-	}
+	// err = o.OpenPerms()
+	// if err != nil {
+	// 	return
+	// }
 }
 
 func (o *ProvisionOperationStateMachine) CreateFs() error {
@@ -328,28 +322,28 @@ func (o *ProvisionOperationStateMachine) CheckMountTargets() error {
 	return nil
 }
 
-func (o *ProvisionOperationStateMachine) OpenPerms() error {
-	logger := o.logger.Session("provision-state-open-perms")
-	logger.Info("start")
-	defer logger.Info("end")
-	defer o.updateCb(o.state)
+// func (o *ProvisionOperationStateMachine) OpenPerms() error {
+// 	logger := o.logger.Session("provision-state-open-perms")
+// 	logger.Info("start")
+// 	defer logger.Info("end")
+// 	defer o.updateCb(o.state)
 
-	opts := map[string]interface{}{"ip": o.state.MountTargetIps[0], "ips": o.state.MountTargetIps, "azs": o.azs}
+// 	opts := map[string]interface{}{"ip": o.state.MountTargetIps[0], "ips": o.state.MountTargetIps, "azs": o.azs}
 
-	ctx := context.TODO()
-	env := driverhttp.NewHttpDriverEnv(logger, ctx)
+// 	ctx := context.TODO()
+// 	env := driverhttp.NewHttpDriverEnv(logger, ctx)
 
-	resp := o.efsTools.OpenPerms(env, efsvoltools.OpenPermsRequest{Name: o.state.FsID, Opts: opts})
-	if resp.Err != "" {
-		o.state.Err = NewOperationStateErr(resp.Err)
-		logger.Error("failed-to-open-mount-permissions", o.state.Err)
-		return o.state.Err
-	}
+// 	resp := o.efsTools.OpenPerms(env, efsvoltools.OpenPermsRequest{Name: o.state.FsID, Opts: opts})
+// 	if resp.Err != "" {
+// 		o.state.Err = NewOperationStateErr(resp.Err)
+// 		logger.Error("failed-to-open-mount-permissions", o.state.Err)
+// 		return o.state.Err
+// 	}
 
-	o.state.MountPermsSet = true
+// 	o.state.MountPermsSet = true
 
-	return nil
-}
+// 	return nil
+// }
 
 type DeprovisionOperationSpec struct {
 	InstanceID     string
