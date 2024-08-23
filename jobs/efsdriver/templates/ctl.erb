@@ -45,7 +45,6 @@ case $1 in
 
     exec chpst /var/vcap/packages/efsdriver/bin/efsdriver \
       --listenAddr="<%= p("efsdriver.listen_addr") %>" \
-      --efsVolToolsAddr="<%= p("efsdriver.efs_vol_tools_addr") %>" \
       --transport="tcp-json" \
       <% if p("efsdriver.tls.ca_cert") != '' %>\
       --requireSSL \
