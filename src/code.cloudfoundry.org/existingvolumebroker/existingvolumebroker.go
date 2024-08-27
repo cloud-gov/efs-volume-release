@@ -1,7 +1,6 @@
 package existingvolumebroker
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -9,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"regexp"
 	"sync"
 
 	"code.cloudfoundry.org/clock"
@@ -18,6 +16,7 @@ import (
 	"code.cloudfoundry.org/service-broker-store/brokerstore"
 	vmo "code.cloudfoundry.org/volume-mount-options"
 	vmou "code.cloudfoundry.org/volume-mount-options/utils"
+	"github.com/pivotal-cf/brokerapi"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 )
@@ -28,6 +27,21 @@ const (
 	SOURCE_KEY             = "source"
 	VERSION_KEY            = "version"
 )
+
+type EFSInstance struct {
+	brokerapi.ProvisionDetails
+	EfsId         string             `json:"EfsId"`
+	FsState       string             `json:"FsState"`
+	MountId       string             `json:"MountId"`
+	MountState    string             `json:"MountState"`
+	MountPermsSet bool               `json:"MountPermsSet"`
+	MountIp       string             `json:"MountIp"`
+	MountIds      []string           `json:"MountIds"`
+	MountStates   []string           `json:"MountStates"`
+	MountIps      []string           `json:"MountIps"`
+	MountAZs      []string           `json:"MountAZs"`
+	Err           *OperationStateErr `json:"Err"`
+}
 
 type lock interface {
 	Lock()
@@ -109,32 +123,6 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	logger.Info("start")
 	defer logger.Info("end")
 
-	var configuration map[string]interface{}
-
-	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
-	}
-
-	share := stringifyShare(configuration[SHARE_KEY])
-	if share == "" {
-		return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
-	}
-
-	if _, ok := configuration[SOURCE_KEY]; ok {
-		return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
-	}
-
-	if b.isNFSBroker() {
-		re := regexp.MustCompile("^[^/]+:/")
-		match := re.MatchString(share)
-
-		if match {
-			return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
-		}
-	}
-
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	defer func() {
@@ -143,13 +131,18 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 			e = out
 		}
 	}()
+	if !asyncAllowed {
+		return brokerapi.ProvisionedServiceSpec{}, brokerapi.ErrAsyncRequired
+	}
+
+	efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
 
 	instanceDetails := brokerstore.ServiceInstance{
 		ServiceID:          details.ServiceID,
 		PlanID:             details.PlanID,
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
-		ServiceFingerPrint: configuration,
+		ServiceFingerPrint: efsInstance,
 	}
 
 	if b.instanceConflicts(instanceDetails, instanceID) {
@@ -160,6 +153,9 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
+	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
+
+	go operation.Execute()
 
 	logger.Info("service-instance-created", lager.Data{"instanceDetails": instanceDetails})
 
