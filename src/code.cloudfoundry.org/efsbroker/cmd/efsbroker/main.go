@@ -6,11 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/debugserver"
@@ -243,19 +241,19 @@ func newLogger() (lager.Logger, *lager.ReconfigurableSink) {
 	return lagerflags.NewFromConfig("efsbroker", lagerConfig)
 }
 func verifyCredhubIsReachable(logger lager.Logger) {
-	var client = &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	// var client = &http.Client{
+	// 	Timeout: 30 * time.Second,
+	// }
 
 	evbutils.IsThereAProxy(&osshim.OsShim{}, logger)
 
-	resp, err := client.Get(*credhubURL + "/info")
-	if err != nil {
-		logger.Fatal("Unable to connect to credhub", err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		logger.Fatal(fmt.Sprintf("Attempted to connect to credhub. Expected 200. Got %d", resp.StatusCode), nil, lager.Data{"response_headers": fmt.Sprintf("%v", resp.Header)})
-	}
+	// resp, err := client.Get(*credhubURL + "/info")
+	// if err != nil {
+	// 	logger.Fatal("Unable to connect to credhub", err)
+	// }
+	// if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	// 	logger.Fatal(fmt.Sprintf("Attempted to connect to credhub. Expected 200. Got %d", resp.StatusCode), nil, lager.Data{"response_headers": fmt.Sprintf("%v", resp.Header)})
+	// }
 }
 
 func parseVcapServices(logger lager.Logger, os osshim.Os) {
