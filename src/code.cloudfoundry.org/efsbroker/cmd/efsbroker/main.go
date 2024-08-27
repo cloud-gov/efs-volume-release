@@ -14,9 +14,9 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/debugserver"
-	"code.cloudfoundry.org/efsbroker/efsbroker"
 	"code.cloudfoundry.org/efsbroker/utils"
 	"code.cloudfoundry.org/existingvolumebroker"
+	evbutils "code.cloudfoundry.org/existingvolumebroker/utils"
 	"code.cloudfoundry.org/goshims/osshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
@@ -24,6 +24,7 @@ import (
 	vmo "code.cloudfoundry.org/volume-mount-options"
 	vmou "code.cloudfoundry.org/volume-mount-options/utils"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
 	"github.com/pivotal-cf/brokerapi/v11"
 	"github.com/tedsuo/ifrit"
@@ -99,16 +100,6 @@ var cfServiceName = flag.String(
 	"(optional) For CF pushed apps, the service name in VCAP_SERVICES where we should find database credentials.  dbDriver must be defined if this option is set, but all other db parameters will be extracted from the service binding.",
 )
 
-var username = flag.String(
-	"username",
-	"admin",
-	"basic auth username to verify on incoming requests",
-)
-var password = flag.String(
-	"password",
-	"admin",
-	"basic auth password to verify on incoming requests",
-)
 var awsSubnetIds = flag.String(
 	"awsSubnetIds",
 	"",
@@ -301,7 +292,7 @@ func getByAlias(data map[string]interface{}, keys ...string) interface{} {
 	}
 	return nil
 }
-func parseSubnets() []efsbroker.Subnet {
+func parseSubnets() []existingvolumebroker.Subnet {
 	subnetIDs := strings.Split(*awsSubnetIds, ",")
 	AZs := strings.Split(*awsAZs, ",")
 	securityGroups := strings.Split(*awsSecurityGroups, ",")
@@ -309,14 +300,15 @@ func parseSubnets() []efsbroker.Subnet {
 		panic("arguments awsSubnetIds, awsAZs, and awsSecurityGroups must have the same number of entries")
 	}
 
-	ret := []efsbroker.Subnet{}
+	ret := []existingvolumebroker.Subnet{}
 	for i, s := range subnetIDs {
-		ret = append(ret, efsbroker.Subnet{ID: s, AZ: AZs[i], SecurityGroup: securityGroups[i]})
+		ret = append(ret, existingvolumebroker.Subnet{ID: s, AZ: AZs[i], SecurityGroup: securityGroups[i]})
 	}
 	return ret
 }
 
 func createServer(logger lager.Logger) ifrit.Runner {
+	session, err := session.NewSession()
 	if isCfPushed() {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
@@ -377,11 +369,11 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		configMask,
 		efsClient,
 		subnets,
-		efsbroker.NewProvisionOperation,
-		efsbroker.NewDeprovisionOperation
+		existingvolumebroker.NewProvisionOperation,
+		existingvolumebroker.NewDeprovisionOperation,
 	)
 
-	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
+	credentials := brokerapi.BrokerCredentials{Username: username, Password: password}
 	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)

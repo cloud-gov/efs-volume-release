@@ -8,6 +8,7 @@ require (
 	code.cloudfoundry.org/lager/v3 v3.2.0
 	code.cloudfoundry.org/service-broker-store v0.87.0
 	code.cloudfoundry.org/volume-mount-options v0.95.0
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/pivotal-cf/brokerapi/v11 v11.0.7
 	github.com/tedsuo/ifrit v0.0.0-20230516164442-7862c310ad26
 )
@@ -21,6 +22,7 @@ require (
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.20.1 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	golang.org/x/crypto v0.26.0 // indirect

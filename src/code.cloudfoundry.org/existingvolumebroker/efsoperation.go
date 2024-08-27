@@ -11,7 +11,7 @@ import (
 	"code.cloudfoundry.org/lager/v3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/pivotal-cf/brokerapi/v11"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 )
 
 //go:generate counterfeiter -o efsfakes/fake_operation.go . Operation
@@ -66,11 +66,11 @@ type OperationState struct {
 	Err               *OperationStateErr
 }
 
-func NewProvisionOperation(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation {
+func NewProvisionOperation(logger lager.Logger, instanceID string, details domain.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation {
 	return NewProvisionStateMachine(logger, instanceID, details, efsService, subnets, clock, updateCb)
 }
 
-func NewProvisionStateMachine(logger lager.Logger, instanceID string, details brokerapi.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) *ProvisionOperationStateMachine {
+func NewProvisionStateMachine(logger lager.Logger, instanceID string, details domain.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) *ProvisionOperationStateMachine {
 	return &ProvisionOperationStateMachine{
 		details,
 		efsService,
@@ -92,7 +92,7 @@ func NewProvisionStateMachine(logger lager.Logger, instanceID string, details br
 }
 
 type ProvisionOperationStateMachine struct {
-	details         brokerapi.ProvisionDetails
+	details         domain.ProvisionDetails
 	efsService      EFSService
 	subnets         []Subnet
 	logger          lager.Logger
