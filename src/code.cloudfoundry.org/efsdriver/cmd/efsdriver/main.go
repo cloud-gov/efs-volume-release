@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"code.cloudfoundry.org/tlsconfig"
+
 	cf_debug_server "code.cloudfoundry.org/debugserver"
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
@@ -23,7 +25,7 @@ import (
 	"code.cloudfoundry.org/goshims/timeshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
-	"code.cloudfoundry.org/tlsconfig"
+
 	"code.cloudfoundry.org/volumedriver"
 	"code.cloudfoundry.org/volumedriver/invoker"
 	"code.cloudfoundry.org/volumedriver/mountchecker"
@@ -57,11 +59,13 @@ var transport = flag.String(
 	"tcp",
 	"Transport protocol to transmit HTTP over",
 )
+
 var mapfsPath = flag.String(
 	"mapfsPath",
 	"/var/vcap/packages/mapfs/bin/mapfs",
 	"Path to the mapfs binary",
 )
+
 var mountDir = flag.String(
 	"mountDir",
 	"/tmp/volumes",
@@ -131,7 +135,7 @@ func main() {
 	var idResolver efsmounter.IdResolver
 	var mounter volumedriver.Mounter
 
-	logger, logTap := newLogger()
+	logger, logSink := newLogger()
 	logger.Info("start")
 	defer logger.Info("end")
 
@@ -152,6 +156,7 @@ func main() {
 	if err != nil {
 		exitOnFailure(logger, err)
 	}
+
 	processGroupInvoker := invoker.NewProcessGroupInvoker()
 
 	mounter = efsmounter.NewEfsMounter(
@@ -193,7 +198,7 @@ func main() {
 
 	if dbgAddr := cf_debug_server.DebugAddress(flag.CommandLine); dbgAddr != "" {
 		servers = append(grouper.Members{
-			{Name: "debug-server", Runner: cf_debug_server.Runner(dbgAddr, logTap)},
+			{Name: "debug-server", Runner: cf_debug_server.Runner(dbgAddr, logSink)},
 		}, servers...)
 	}
 
@@ -258,6 +263,7 @@ func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, atAd
 	}
 
 	handler, err := driverhttp.NewHandler(logger, client)
+
 	exitOnFailure(logger, err)
 
 	var server ifrit.Runner

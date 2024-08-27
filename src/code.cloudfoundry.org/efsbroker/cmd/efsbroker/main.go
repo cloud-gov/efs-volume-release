@@ -6,14 +6,17 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/debugserver"
 	"code.cloudfoundry.org/efsbroker/efsbroker"
 	"code.cloudfoundry.org/efsbroker/utils"
+	"code.cloudfoundry.org/existingvolumebroker"
 	"code.cloudfoundry.org/goshims/osshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
@@ -21,7 +24,6 @@ import (
 	vmo "code.cloudfoundry.org/volume-mount-options"
 	vmou "code.cloudfoundry.org/volume-mount-options/utils"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
 	"github.com/pivotal-cf/brokerapi/v11"
 	"github.com/tedsuo/ifrit"
@@ -37,8 +39,14 @@ var dataDir = flag.String(
 
 var atAddress = flag.String(
 	"listenAddr",
-	"0.0.0.0:7589",
+	"0.0.0.0:8999",
 	"host:port to serve service broker API",
+)
+
+var servicesConfig = flag.String(
+	"servicesConfig",
+	"",
+	"[REQUIRED] - Path to services config to register with cloud controller",
 )
 var efsToolsAddress = flag.String(
 	"efsToolsAddress",
@@ -129,12 +137,6 @@ var defaultOptions = flag.String(
 	"A comma separated list of defaults specified as param:value. If a parameter has a default value and is not in the allowed list, this default value becomes a fixed value that cannot be overridden",
 )
 
-var servicesConfig = flag.String(
-	"servicesConfig",
-	"",
-	"[REQUIRED] - Path to services config to register with cloud controller",
-)
-
 var credhubURL = flag.String(
 	"credhubURL",
 	"",
@@ -147,14 +149,14 @@ var credhubCACert = flag.String(
 	"(optional) CA Cert for CredHub",
 )
 
-var credhubClientID = flag.String(
-	"credhubClientID",
+var uaaClientID = flag.String(
+	"uaaClientID",
 	"",
 	"(optional) UAA client ID when using CredHub to store broker state",
 )
 
-var credhubClientSecret = flag.String(
-	"credhubClientSecret",
+var uaaClientSecret = flag.String(
+	"uaaClientSecret",
 	"",
 	"(optional) UAA client secret when using CredHub to store broker state",
 )
@@ -172,9 +174,16 @@ var storeID = flag.String(
 )
 
 var (
-	dbUsername string
-	dbPassword string
+	username string
+	password string
 )
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o fakes/retired_store_fake.go . RetiredStore
+type RetiredStore interface {
+	IsRetired() (bool, error)
+	brokerstore.Store
+}
 
 func main() {
 	parseCommandLine()
@@ -182,15 +191,17 @@ func main() {
 
 	checkParams()
 
-	logger, logTap := newLogger()
+	logger, logSink := newLogger()
 	logger.Info("starting")
 	defer logger.Info("ends")
+
+	verifyCredhubIsReachable(logger)
 
 	server := createServer(logger)
 
 	if dbgAddr := debugserver.DebugAddress(flag.CommandLine); dbgAddr != "" {
 		server = utils.ProcessRunnerFor(grouper.Members{
-			{Name: "debug-server", Runner: debugserver.Runner(dbgAddr, logTap)},
+			{Name: "debug-server", Runner: debugserver.Runner(dbgAddr, logSink)},
 			{Name: "broker-api", Runner: server},
 		})
 	}
@@ -207,13 +218,22 @@ func parseCommandLine() {
 }
 
 func parseEnvironment() {
-	dbUsername, _ = os.LookupEnv("DB_USERNAME")
-	dbPassword, _ = os.LookupEnv("DB_PASSWORD")
+	username, _ = os.LookupEnv("USERNAME")
+	password, _ = os.LookupEnv("PASSWORD")
+	uaaClientSecretString, _ := os.LookupEnv("UAA_CLIENT_SECRET")
+	if uaaClientSecretString != "" {
+		uaaClientSecret = &uaaClientSecretString
+	}
+	uaaClientIDString, _ := os.LookupEnv("UAA_CLIENT_ID")
+	if uaaClientIDString != "" {
+		uaaClientID = &uaaClientIDString
+	}
+
 }
 
 func checkParams() {
-	if *dataDir == "" && *dbDriver == "" {
-		fmt.Fprint(os.Stderr, "\nERROR: Either dataDir or db parameters must be provided.\n\n")
+	if *dataDir == "" && *credhubURL == "" {
+		fmt.Fprint(os.Stderr, "\nERROR: Either dataDir or credhubURL parameters must be provided.\n\n")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -231,12 +251,23 @@ func newLogger() (lager.Logger, *lager.ReconfigurableSink) {
 
 	return lagerflags.NewFromConfig("efsbroker", lagerConfig)
 }
-
-func parseVcapServices(logger lager.Logger, os osshim.Os) {
-	if *dbDriver == "" {
-		logger.Fatal("missing-db-driver-parameter", errors.New("dbDriver parameter is required for cf deployed broker"))
+func verifyCredhubIsReachable(logger lager.Logger) {
+	var client = &http.Client{
+		Timeout: 30 * time.Second,
 	}
 
+	evbutils.IsThereAProxy(&osshim.OsShim{}, logger)
+
+	resp, err := client.Get(*credhubURL + "/info")
+	if err != nil {
+		logger.Fatal("Unable to connect to credhub", err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		logger.Fatal(fmt.Sprintf("Attempted to connect to credhub. Expected 200. Got %d", resp.StatusCode), nil, lager.Data{"response_headers": fmt.Sprintf("%v", resp.Header)})
+	}
+}
+
+func parseVcapServices(logger lager.Logger, os osshim.Os) {
 	// populate db parameters from VCAP_SERVICES and pitch a fit if there isn't one.
 	services, hasValue := os.LookupEnv("VCAP_SERVICES")
 	if !hasValue {
@@ -259,15 +290,17 @@ func parseVcapServices(logger lager.Logger, os osshim.Os) {
 	credentials := stuff3["credentials"].(map[string]interface{})
 	logger.Debug("credentials-parsed", lager.Data{"credentials": credentials})
 
-	dbUsername = credentials["username"].(string)
-	dbPassword = credentials["password"].(string)
-	*dbHostname = credentials["hostname"].(string)
-	if *dbPort, ok = credentials["port"].(string); !ok {
-		*dbPort = fmt.Sprintf("%.0f", credentials["port"].(float64))
-	}
-	*dbName = credentials["name"].(string)
 }
 
+func getByAlias(data map[string]interface{}, keys ...string) interface{} {
+	for _, key := range keys {
+		value, ok := data[key]
+		if ok {
+			return value
+		}
+	}
+	return nil
+}
 func parseSubnets() []efsbroker.Subnet {
 	subnetIDs := strings.Split(*awsSubnetIds, ",")
 	AZs := strings.Split(*awsAZs, ",")
@@ -284,12 +317,7 @@ func parseSubnets() []efsbroker.Subnet {
 }
 
 func createServer(logger lager.Logger) ifrit.Runner {
-	session, err := session.NewSession()
-	if err != nil {
-		panic(err)
-	}
-
-	if *cfServiceName != "" {
+	if isCfPushed() {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
 
@@ -297,13 +325,23 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		logger,
 		*credhubURL,
 		*credhubCACert,
-		*credhubClientID,
-		*credhubClientSecret,
+		*uaaClientID,
+		*uaaClientSecret,
 		*uaaCACert,
 		*storeID,
 	)
 
+	retired, err := IsRetired(store)
+	if err != nil {
+		logger.Fatal("check-is-retired-failed", err)
+	}
+
+	if retired {
+		logger.Fatal("retired-store", errors.New("Store is retired"))
+	}
+
 	cacheOptsValidator := vmo.UserOptsValidationFunc(validateCache)
+
 	configMask, err := vmo.NewMountOptsMask(
 		strings.Split(*allowedOptions, ","),
 		vmou.ParseOptionStringToMap(*defaultOptions, ":"),
@@ -325,23 +363,39 @@ func createServer(logger lager.Logger) ifrit.Runner {
 
 	subnets := parseSubnets()
 
-	serviceBroker := efsbroker.New(
+	services, err := NewServicesFromConfig(*servicesConfig)
+	if err != nil {
+		logger.Fatal("loading-services-config-error", err)
+	}
+	serviceBroker := existingvolumebroker.New(
+		existingvolumebroker.BrokerTypeEFS,
 		logger,
-		*serviceName,
-		*serviceId,
-		*dataDir,
+		services,
 		&osshim.OsShim{},
 		clock.NewClock(),
 		store,
+		configMask,
 		efsClient,
 		subnets,
 		efsbroker.NewProvisionOperation,
-		efsbroker.NewDeprovisionOperation)
+		efsbroker.NewDeprovisionOperation
+	)
 
 	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
 	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)
+}
+
+func isCfPushed() bool {
+	return *cfServiceName != ""
+}
+
+func IsRetired(store brokerstore.Store) (bool, error) {
+	if retiredStore, ok := store.(RetiredStore); ok {
+		return retiredStore.IsRetired()
+	}
+	return false, nil
 }
 
 func validateCache(key string, val string) error {
