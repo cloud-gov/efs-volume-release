@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	cf_http "code.cloudfoundry.org/cfhttp"
 	cf_debug_server "code.cloudfoundry.org/debugserver"
 	"code.cloudfoundry.org/dockerdriver"
 	"code.cloudfoundry.org/dockerdriver/driverhttp"
@@ -24,6 +23,7 @@ import (
 	"code.cloudfoundry.org/goshims/timeshim"
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/lager/v3/lagerflags"
+	"code.cloudfoundry.org/tlsconfig"
 	"code.cloudfoundry.org/volumedriver"
 	"code.cloudfoundry.org/volumedriver/invoker"
 	"code.cloudfoundry.org/volumedriver/mountchecker"
@@ -234,7 +234,7 @@ func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, atAd
 	advertisedUrl := "http://" + atAddress
 	logger.Info("writing-spec-file", lager.Data{"location": driversPath, "name": "efsdriver", "address": advertisedUrl})
 	if jsonSpec {
-		driverJsonSpec := dockerdriver.DriverSpec{Name: "efsdriver", Address: advertisedUrl}
+		driverJsonSpec := dockerdriver.DriverSpec{Name: "efsdriver", Address: advertisedUrl, UniqueVolumeIds: true}
 
 		if *requireSSL {
 			absCaFile, err := filepath.Abs(*caFile)
@@ -262,7 +262,12 @@ func createEfsDriverServer(logger lager.Logger, client dockerdriver.Driver, atAd
 
 	var server ifrit.Runner
 	if *requireSSL {
-		tlsConfig, err := cf_http.NewTLSConfig(*certFile, *keyFile, *caFile)
+		tlsConfig, err := tlsconfig.
+			Build(
+				tlsconfig.WithIdentityFromFile(*certFile, *keyFile),
+				tlsconfig.WithInternalServiceDefaults(),
+			).
+			Server(tlsconfig.WithClientAuthenticationFromFile(*caFile))
 		if err != nil {
 			logger.Fatal("tls-configuration-failed", err)
 		}
