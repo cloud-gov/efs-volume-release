@@ -41,15 +41,13 @@ case $1 in
       --dbDriver="<%= p("efsbroker.db_driver") %>" \
       --dbHostname="<%= p("efsbroker.db_hostname") %>" \
       --credhubURL="<%= p("efsbroker.credhub.url") %>" \
-      --credhubClientID="<%= p("efsbroker.credhub.clientid") %>" \
-      --credhubClientSecret="<%= p("efsbroker.credhub.clientsecret") %>" \
+      --uaaClientID="<%= p("efsbroker.credhub.clientid") %>" \
+      --uaaClientSecret="<%= p("efsbroker.credhub.clientsecret") %>" \
       --uaaCACert="<%= p("efsbroker.uaa.ca") %>" \
       --credhubCACert="<%= p("efsbroker.credhub.ca") %>" \
       --dbPort="<%= p("efsbroker.db_port") %>" \
       --dbName="<%= p("efsbroker.db_name") %>" \
       --dbCACertPath=/var/vcap/jobs/efsbroker/db_ca.crt \
-      --username="<%= p("efsbroker.username") %>" \
-      --password="<%= p("efsbroker.password") %>" \
       --awsSubnetIds="<%= p("efsbroker.aws-subnet-ids") %>" \
       --awsSecurityGroups="<%= p("efsbroker.aws-security-groups") %>" \
       --awsAZs="<%= p("efsbroker.aws-azs") %>" \
