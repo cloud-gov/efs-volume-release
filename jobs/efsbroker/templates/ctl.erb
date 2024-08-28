@@ -40,7 +40,6 @@ case $1 in
       --servicesConfig=/var/vcap/jobs/efsbroker/config/services.json \
       --dataDir="<%= p("efsbroker.data-dir") %>" \
       --dbDriver="<%= p("efsbroker.db_driver") %>" \
-      --dbHostname="<%= p("efsbroker.db_hostname") %>" \
       --credhubURL="<%= p("efsbroker.credhub.url") %>" \
       --password="<%= p("efsbroker.password") %>" \
       --username="<%= p("efsbroker.username") %>" \
@@ -48,9 +47,6 @@ case $1 in
       --uaaClientSecret="<%= p("efsbroker.credhub.clientsecret") %>" \
       --uaaCACert="<%= p("efsbroker.uaa.ca") %>" \
       --credhubCACert="<%= p("efsbroker.credhub.ca") %>" \
-      --dbPort="<%= p("efsbroker.db_port") %>" \
-      --dbName="<%= p("efsbroker.db_name") %>" \
-      --dbCACertPath=/var/vcap/jobs/efsbroker/db_ca.crt \
       --awsSubnetIds="<%= p("efsbroker.aws-subnet-ids") %>" \
       --awsSecurityGroups="<%= p("efsbroker.aws-security-groups") %>" \
       --awsAZs="<%= p("efsbroker.aws-azs") %>" \
