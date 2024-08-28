@@ -47,11 +47,7 @@ var servicesConfig = flag.String(
 	"",
 	"[REQUIRED] - Path to services config to register with cloud controller",
 )
-var efsToolsAddress = flag.String(
-	"efsToolsAddress",
-	"127.0.0.1:7090",
-	"host:port to reach the efsdriver when creating volumes",
-)
+
 var serviceName = flag.String(
 	"serviceName",
 	"efsvolume",
@@ -67,29 +63,6 @@ var dbDriver = flag.String(
 	"dbDriver",
 	"",
 	"(optional) database driver name when using SQL to store broker state",
-)
-
-var dbHostname = flag.String(
-	"dbHostname",
-	"",
-	"(optional) database hostname when using SQL to store broker state",
-)
-var dbPort = flag.String(
-	"dbPort",
-	"",
-	"(optional) database port when using SQL to store broker state",
-)
-
-var dbName = flag.String(
-	"dbName",
-	"",
-	"(optional) database name when using SQL to store broker state",
-)
-
-var dbCACertPath = flag.String(
-	"dbCACertPath",
-	"",
-	"(optional) Path to CA Cert for database SSL connection",
 )
 
 var cfServiceName = flag.String(
@@ -171,13 +144,6 @@ var password = flag.String(
 	"admin",
 	"basic auth password to verify on incoming requests",
 )
-
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
-//counterfeiter:generate -o fakes/retired_store_fake.go . RetiredStore
-type RetiredStore interface {
-	IsRetired() (bool, error)
-	brokerstore.Store
-}
 
 func main() {
 	parseCommandLine()
@@ -310,6 +276,9 @@ func parseSubnets() []existingvolumebroker.Subnet {
 
 func createServer(logger lager.Logger) ifrit.Runner {
 	session, err := session.NewSession()
+	if err != nil {
+		logger.Fatal("creating-session-failed", err)
+	}
 	if isCfPushed() {
 		parseVcapServices(logger, &osshim.OsShim{})
 	}
@@ -323,15 +292,6 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		*uaaCACert,
 		*storeID,
 	)
-
-	retired, err := IsRetired(store)
-	if err != nil {
-		logger.Fatal("check-is-retired-failed", err)
-	}
-
-	if retired {
-		logger.Fatal("retired-store", errors.New("Store is retired"))
-	}
 
 	cacheOptsValidator := vmo.UserOptsValidationFunc(validateCache)
 
@@ -382,13 +342,6 @@ func createServer(logger lager.Logger) ifrit.Runner {
 
 func isCfPushed() bool {
 	return *cfServiceName != ""
-}
-
-func IsRetired(store brokerstore.Store) (bool, error) {
-	if retiredStore, ok := store.(RetiredStore); ok {
-		return retiredStore.IsRetired()
-	}
-	return false, nil
 }
 
 func validateCache(key string, val string) error {
