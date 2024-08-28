@@ -42,6 +42,8 @@ case $1 in
       --dbDriver="<%= p("efsbroker.db_driver") %>" \
       --dbHostname="<%= p("efsbroker.db_hostname") %>" \
       --credhubURL="<%= p("efsbroker.credhub.url") %>" \
+      --password="<%= p("efsbroker.username") %>" \
+      --username="<%= p("efsbroker.password") %>" \
       --uaaClientID="<%= p("efsbroker.credhub.clientid") %>" \
       --uaaClientSecret="<%= p("efsbroker.credhub.clientsecret") %>" \
       --uaaCACert="<%= p("efsbroker.uaa.ca") %>" \

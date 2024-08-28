@@ -161,10 +161,15 @@ var storeID = flag.String(
 	"efsbroker",
 	"(optional) Store ID used to namespace instance details and bindings (credhub only)",
 )
-
-var (
-	username string
-	password string
+var username = flag.String(
+	"username",
+	"admin",
+	"basic auth username to verify on incoming requests",
+)
+var password = flag.String(
+	"password",
+	"admin",
+	"basic auth password to verify on incoming requests",
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -207,8 +212,6 @@ func parseCommandLine() {
 }
 
 func parseEnvironment() {
-	username, _ = os.LookupEnv("USERNAME")
-	password, _ = os.LookupEnv("PASSWORD")
 	uaaClientSecretString, _ := os.LookupEnv("UAA_CLIENT_SECRET")
 	if uaaClientSecretString != "" {
 		uaaClientSecret = &uaaClientSecretString
@@ -371,7 +374,7 @@ func createServer(logger lager.Logger) ifrit.Runner {
 		existingvolumebroker.NewDeprovisionOperation,
 	)
 
-	credentials := brokerapi.BrokerCredentials{Username: username, Password: password}
+	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
 	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)
