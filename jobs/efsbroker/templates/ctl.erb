@@ -37,7 +37,7 @@ case $1 in
       --listenAddr="<%= p("efsbroker.listen-addr") %>" \
       --serviceName="<%= p("efsbroker.service-name") %>" \
       --serviceId="<%= p("efsbroker.service-id") %>" \
-      --servicesConfig="./services.json" \
+      --servicesConfig=/var/vcap/jobs/efsbroker/config/services.json \
       --dataDir="<%= p("efsbroker.data-dir") %>" \
       --dbDriver="<%= p("efsbroker.db_driver") %>" \
       --dbHostname="<%= p("efsbroker.db_hostname") %>" \
