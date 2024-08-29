@@ -173,7 +173,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 
 	instanceDetails := brokerstore.ServiceInstance{
 		ServiceID:          "d0406c23-c33f-4f10-804b-9083a486d857",
-		PlanID:             details.PlanID,
+		PlanID:             "09a09260-1df5-4445-9ed7-1ba56dadbbc8",
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
 		ServiceFingerPrint: efsInstance,
