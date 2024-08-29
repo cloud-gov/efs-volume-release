@@ -196,7 +196,8 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	}()
 
 	efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
-
+	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
+	go operation.Execute()
 	instanceDetails := brokerstore.ServiceInstance{
 		ServiceID:          details.ServiceID,
 		PlanID:             details.PlanID,
@@ -213,9 +214,6 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
-	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
-
-	go operation.Execute()
 
 	logger.Info("service-instance-created", lager.Data{"instanceDetails": instanceDetails})
 
