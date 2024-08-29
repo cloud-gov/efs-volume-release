@@ -1,6 +1,7 @@
 package existingvolumebroker
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"regexp"
 	"sync"
 
 	"code.cloudfoundry.org/clock"
@@ -159,6 +161,30 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	logger := b.logger.Session("provision").WithData(lager.Data{"instanceID": instanceID, "details": details})
 	logger.Info("start")
 	defer logger.Info("end")
+	var configuration map[string]interface{}
+
+	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
+	}
+
+	share := stringifyShare(configuration[SHARE_KEY])
+	if share == "" {
+		return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
+	}
+
+	if _, ok := configuration[SOURCE_KEY]; ok {
+		return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
+	}
+	if b.isNFSBroker() {
+		re := regexp.MustCompile("^[^/]+:/")
+		match := re.MatchString(share)
+
+		if match {
+			return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
+		}
+	}
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -172,8 +198,8 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
 
 	instanceDetails := brokerstore.ServiceInstance{
-		ServiceID:          "d0406c23-c33f-4f10-804b-9083a486d857",
-		PlanID:             "09a09260-1df5-4445-9ed7-1ba56dadbbc8",
+		ServiceID:          details.ServiceID,
+		PlanID:             details.PlanID,
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
 		ServiceFingerPrint: efsInstance,
@@ -183,7 +209,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		return domain.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 	}
 
-	err := b.store.CreateInstanceDetails(instanceID, instanceDetails)
+	err = b.store.CreateInstanceDetails(instanceID, instanceDetails)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
