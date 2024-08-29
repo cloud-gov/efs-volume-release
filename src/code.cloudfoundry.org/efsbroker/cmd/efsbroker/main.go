@@ -335,6 +335,7 @@ func createServer(logger lager.Logger) ifrit.Runner {
 	)
 
 	credentials := brokerapi.BrokerCredentials{Username: *username, Password: *password}
+	logger.Info("about to do handler", lager.Data{"broker": serviceBroker})
 	handler := brokerapi.New(serviceBroker, slog.New(lager.NewHandler(logger.Session("broker-api"))), credentials)
 
 	return http_server.New(*atAddress, handler)

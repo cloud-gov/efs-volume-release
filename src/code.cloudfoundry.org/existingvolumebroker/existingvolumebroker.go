@@ -144,7 +144,7 @@ func (b *Broker) isEFSBroker() bool {
 }
 
 func (b *Broker) Services(_ context.Context) ([]domain.Service, error) {
-	logger := b.logger.Session("services").WithData(lager.Data{"services": b.services.List()})
+	logger := b.logger.Session("services")
 	logger.Info("start")
 	defer logger.Info("end")
 
