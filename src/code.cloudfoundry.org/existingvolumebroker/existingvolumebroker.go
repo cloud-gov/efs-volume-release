@@ -28,8 +28,9 @@ const (
 	VERSION_KEY            = "version"
 	PermissionVolumeMount  = domain.RequiredPermission("volume_mount")
 	DefaultContainerPath   = "/var/vcap/data"
-
-	RootPath = ":/"
+	ServiceName            = "efs"
+	ServiceId              = "d0406c23-c33f-4f10-804b-9083a486d857"
+	RootPath               = ":/"
 )
 
 var (
@@ -37,10 +38,10 @@ var (
 	ErrMountTargetUnavailable = errors.New("mount target not in available state")
 )
 
-type staticState struct {
-	ServiceName string `json:"ServiceName"`
-	ServiceId   string `json:"ServiceId"`
-}
+// type staticState struct {
+// 	ServiceName string `json:"ServiceName"`
+// 	ServiceId   string `json:"ServiceId"`
+// }
 
 type EFSInstance struct {
 	domain.ProvisionDetails
