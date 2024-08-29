@@ -163,8 +163,8 @@ func (o *ProvisionOperationStateMachine) CreateFs() error {
 		Tags: []*efs.Tag{
 			{Key: aws.String("organization_guid"), Value: aws.String(o.details.OrganizationGUID)},
 			{Key: aws.String("space_guid"), Value: aws.String(o.details.SpaceGUID)},
-			// {Key: aws.String("service_id"), Value: aws.String("d0406c23-c33f-4f10-804b-9083a486d857")},
-			// {Key: aws.String("plan_id"), Value: aws.String("09a09260-1df5-4445-9ed7-1ba56dadbbc8")},
+			{Key: aws.String("service_id"), Value: aws.String("d0406c23-c33f-4f10-804b-9083a486d857")},
+			{Key: aws.String("plan_id"), Value: aws.String("09a09260-1df5-4445-9ed7-1ba56dadbbc8")},
 			{Key: aws.String("instance"), Value: aws.String(o.state.InstanceID)},
 		},
 	})

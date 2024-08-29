@@ -92,12 +92,12 @@ type Broker struct {
 	os                      osshim.Os
 	mutex                   lock
 	clock                   clock.Clock
+	ProvisionOperation      func(logger lager.Logger, instanceID string, details domain.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation
+	DeprovisionOperation    func(logger lager.Logger, efsService EFSService, clock Clock, spec DeprovisionOperationSpec, updateCb func(*OperationState)) Operation
 	store                   brokerstore.Store
 	services                Services
 	configMask              vmo.MountOptsMask
 	DisallowedBindOverrides []string
-	ProvisionOperation      func(logger lager.Logger, instanceID string, details domain.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation
-	DeprovisionOperation    func(logger lager.Logger, efsService EFSService, clock Clock, spec DeprovisionOperationSpec, updateCb func(*OperationState)) Operation
 }
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
@@ -109,13 +109,12 @@ type Services interface {
 func New(
 	brokerType BrokerType,
 	logger lager.Logger,
-	efsService EFSService,
-	subnets []Subnet,
+	services Services,
 	os osshim.Os,
 	clock clock.Clock,
 	store brokerstore.Store,
-	services Services,
 	configMask vmo.MountOptsMask,
+	efsService EFSService, subnets []Subnet,
 	provisionOperation func(logger lager.Logger, instanceID string, details domain.ProvisionDetails, efsService EFSService, subnets []Subnet, clock Clock, updateCb func(*OperationState)) Operation,
 	deprovisionOperation func(logger lager.Logger, efsService EFSService, clock Clock, spec DeprovisionOperationSpec, updateCb func(*OperationState)) Operation,
 ) *Broker {
@@ -471,8 +470,48 @@ func (b *Broker) LastOperation(_ context.Context, instanceID string, operationDa
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+	switch operationData.OperationData {
+	case "provision":
+		logger.Info("Provisioning")
+		instance, err := b.store.RetrieveInstanceDetails(instanceID)
+		if err != nil {
+			logger.Info("instance-not-found")
+			return domain.LastOperation{}, errors.New(fmt.Sprintf("failed to make instance%s", instanceID))
+		}
+		logger.Debug("service-instance", lager.Data{"instance": instance})
 
-	return domain.LastOperation{}, errors.New("unrecognized operationData")
+		efsInstance, err := getFingerprint(instance.ServiceFingerPrint)
+		if err != nil {
+			return domain.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
+		}
+		logger.Debug("efs-instance", lager.Data{"efs-instance": efsInstance})
+
+		if efsInstance.Err != nil {
+			logger.Info(fmt.Sprintf("last-operation-error %#v", efsInstance.Err))
+			return domain.LastOperation{State: domain.Failed, Description: efsInstance.Err.Error()}, nil
+		}
+
+		return stateToLastOperation(efsInstance), nil
+	case "deprovision":
+		instance, err := b.store.RetrieveInstanceDetails(instanceID)
+
+		if err != nil {
+			return domain.LastOperation{State: domain.Succeeded}, nil
+		} else {
+			efsInstance, err := getFingerprint(instance.ServiceFingerPrint)
+			if err != nil {
+				return domain.LastOperation{}, errors.New(fmt.Sprintf("failed to deserialize details for instance %s", instanceID))
+			}
+			if efsInstance.Err != nil {
+				return domain.LastOperation{State: domain.Failed}, nil
+			} else {
+				return domain.LastOperation{State: domain.InProgress}, nil
+			}
+		}
+	default:
+		return domain.LastOperation{}, errors.New("unrecognized operationData")
+	}
+
 }
 
 // callbacks
