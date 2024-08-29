@@ -96,7 +96,7 @@ properties:
         provider_display_name: "Dell / Pivotal"
         documentation_url: https://docs.cloudfoundry.org/devguide/services/using-vol-services.html
       plans:
-      - id: 0da18102-48dc-46d0-98b3-7a4ff6dc9c54
+      - id: d0406c24-c33f-4f10-804b-90838486d857
         name: "generalPurpose"
         description: "A preexisting share"
         metadata:
