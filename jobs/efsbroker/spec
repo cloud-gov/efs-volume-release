@@ -82,7 +82,7 @@ properties:
   efsbroker.services:
     description: "List of services and plans supported by broker"
     default:
-    - id: "9db9cca4-8fd5-4b96-a4c7-0a48f47c3bad"
+    - id: "d0406c23-c33f-4f10-804b-9083a486d857"
       name: "efs"
       description: "Existing SMB shares (see: https://code.cloudfoundry.org/smb-volume-release/)"
       bindable: true
