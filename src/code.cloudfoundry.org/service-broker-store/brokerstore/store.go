@@ -7,7 +7,6 @@ import (
 
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/service-broker-store/brokerstore/credhub_shims"
-	"github.com/pivotal-cf/brokerapi/v11"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -66,7 +65,7 @@ func NewStore(
 // Utility methods for storing bindings with secrets stripped out
 const HashKey = "paramsHash"
 
-func redactBindingDetails(details brokerapi.BindDetails) (brokerapi.BindDetails, error) {
+func redactBindingDetails(details domain.BindDetails) (domain.BindDetails, error) {
 	if len(details.RawParameters) == 0 {
 		return details, nil
 	}
@@ -82,16 +81,16 @@ func redactBindingDetails(details brokerapi.BindDetails) (brokerapi.BindDetails,
 
 	s, err := json.Marshal(opts)
 	if err != nil {
-		return brokerapi.BindDetails{}, err
+		return domain.BindDetails{}, err
 	}
 	s, err = bcrypt.GenerateFromPassword(s, bcrypt.DefaultCost)
 	if err != nil {
-		return brokerapi.BindDetails{}, err
+		return domain.BindDetails{}, err
 	}
 	redacted := map[string]interface{}{HashKey: string(s)}
 	details.RawParameters, err = json.Marshal(redacted)
 	if err != nil {
-		return brokerapi.BindDetails{}, err
+		return domain.BindDetails{}, err
 	}
 	return details, nil
 }
@@ -105,7 +104,7 @@ func isInstanceConflict(s Store, id string, details ServiceInstance) bool {
 	return false
 }
 
-func isBindingConflict(s Store, id string, details brokerapi.BindDetails) bool {
+func isBindingConflict(s Store, id string, details domain.BindDetails) bool {
 	if existing, err := s.RetrieveBindingDetails(id); err == nil {
 		if existing.AppGUID != details.AppGUID {
 			return true

@@ -172,7 +172,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
 
 	instanceDetails := brokerstore.ServiceInstance{
-		ServiceID:          details.ServiceID,
+		ServiceID:          "d0406c23-c33f-4f10-804b-9083a486d857",
 		PlanID:             details.PlanID,
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
