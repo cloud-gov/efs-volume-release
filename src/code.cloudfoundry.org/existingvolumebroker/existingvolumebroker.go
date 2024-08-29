@@ -150,7 +150,7 @@ func (b *Broker) isEFSBroker() bool {
 }
 
 func (b *Broker) Services(_ context.Context) ([]domain.Service, error) {
-	logger := b.logger.Session("services")
+	logger := b.logger.Session("services").WithData(lager.Data{"services": b.services.List()})
 	logger.Info("start")
 	defer logger.Info("end")
 
@@ -474,6 +474,7 @@ func (b *Broker) LastOperation(_ context.Context, instanceID string, operationDa
 	defer b.mutex.Unlock()
 	switch operationData.OperationData {
 	case "provision":
+		logger.Info("Provisioning")
 		instance, err := b.store.RetrieveInstanceDetails(instanceID)
 		if err != nil {
 			logger.Info("instance-not-found")
