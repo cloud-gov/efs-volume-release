@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"regexp"
 	"sync"
 
 	"code.cloudfoundry.org/clock"
@@ -154,7 +153,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	logger := b.logger.Session("provision").WithData(lager.Data{"instanceID": instanceID, "details": details})
 	logger.Info("start")
 	defer logger.Info("end")
-	var configuration map[string]interface{}
+	// var configuration map[string]interface{}
 
 	// var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
 	// logger.Info("decoder", lager.Data{"decorder": decoder})
@@ -164,22 +163,22 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	// 	return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
 	// }
 
-	share := stringifyShare(configuration[SHARE_KEY])
-	if share == "" {
-		return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
-	}
+	// share := stringifyShare(configuration[SHARE_KEY])
+	// if share == "" {
+	// 	return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
+	// }
 
-	if _, ok := configuration[SOURCE_KEY]; ok {
-		return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
-	}
-	if b.isNFSBroker() {
-		re := regexp.MustCompile("^[^/]+:/")
-		match := re.MatchString(share)
+	// if _, ok := configuration[SOURCE_KEY]; ok {
+	// 	return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
+	// }
+	// if b.isNFSBroker() {
+	// 	re := regexp.MustCompile("^[^/]+:/")
+	// 	match := re.MatchString(share)
 
-		if match {
-			return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
-		}
-	}
+	// 	if match {
+	// 		return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
+	// 	}
+	// }
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
