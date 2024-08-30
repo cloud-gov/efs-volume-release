@@ -3,3 +3,8 @@ check process efsdriver
   start program "/var/vcap/jobs/efsdriver/bin/efsdriver_ctl start"
   stop program "/var/vcap/jobs/efsdriver/bin/efsdriver_ctl stop"
   group vcap
+check process rpcbind matching rpcbind
+  start program "/var/vcap/jobs/efsdriver/bin/rpcbind_ctl start"
+  stop program "/var/vcap/jobs/efsdriver/bin/rpcbind_ctl stop"
+  if failed port 111 then restart
+  group vcap
