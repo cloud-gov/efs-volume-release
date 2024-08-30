@@ -14,6 +14,14 @@ nfs-debs/nfs-common_1%3a1.2.8-9ubuntu12.1_amd64.deb:
   size: 184334
   object_id: fd47c6a3-90c5-45b0-7572-40d7adc78d64
   sha: sha256:91ee605b09bd024ed97338bed442285c5980810d9a94f23aa182255e1c16316b
+nfs-debs/rpcbind-1.2.6-vulnerability_fixes-1.patch:
+  size: 938
+  object_id: 4ea9a4d3-a96a-4ba5-693b-f1adc3b6463c
+  sha: sha256:17a15acdabcf2bfc648af9197bbae8d1bcc1e22215b3d5cf9ff60533bf6522e4
+nfs-debs/rpcbind-1.2.6.tar.bz2:
+  size: 124590
+  object_id: 34079eef-076b-41d2-7a67-91fb1b206ccb
+  sha: sha256:5613746489cae5ae23a443bb85c05a11741a5f12c8f55d2bb5e83b9defeee8de
 nfs-debs/rpcbind_0.2.3-0.2_amd64.deb:
   size: 40252
   object_id: e331ee86-8eff-4cc2-7705-dc9dfdec2fbf
