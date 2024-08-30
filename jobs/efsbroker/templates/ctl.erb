@@ -11,6 +11,9 @@ mkdir -p /var/vcap/sys/log/monit
 
 exec 1>> /var/vcap/sys/log/monit/${SCRIPT}.log
 exec 2>> /var/vcap/sys/log/monit/${SCRIPT}.err.log
+<%
+allowed_options='Err,MountAZs,MountId,MountStates,service_id,FsState,MountPermsSet,plan_id,MountIps,organization_guid,space_guid,EfsId,MountIds,MountIp,MountState'
+%>
 
 case $1 in
   start)
@@ -24,7 +27,6 @@ case $1 in
     chown -R vcap:vcap "<%= p("efsbroker.data-dir") %>"
 
     echo $$ > $PIDFILE
-    allowed_options='Err,MountAZs,MountId,MountStates,service_id,FsState,MountPermsSet,plan_id,MountIps,organization_guid,space_guid,EfsId,MountIds,MountIp,MountState'
     export AWS_REGION='<%= p("efsbroker.aws-region") %>'
     <% if_p("efsbroker.aws-access-key-id") do |access_key| %>export AWS_ACCESS_KEY_ID='<%= access_key %>'<% end %>
     <% if_p("efsbroker.aws-secret-access-key") do |secret_key| %>export AWS_SECRET_ACCESS_KEY='<%= secret_key %>'<% end %>
