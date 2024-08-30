@@ -79,7 +79,7 @@ func (d *VolumeDriver) Create(env dockerdriver.Env, createRequest dockerdriver.C
 
 	var ok bool
 	if _, ok = createRequest.Opts["ip"].(string); !ok {
-		logger.Info("mount-config-missing-source", lager.Data{"volume_name": createRequest.Name})
+		logger.Info("mount-config-missing-source", lager.Data{"volume_name": createRequest.Name, "opts": createRequest.Opts})
 		return dockerdriver.ErrorResponse{Err: `Missing mandatory 'source' field in 'Opts'`}
 	}
 
