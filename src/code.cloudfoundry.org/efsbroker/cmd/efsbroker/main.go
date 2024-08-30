@@ -302,7 +302,7 @@ func createServer(logger lager.Logger) ifrit.Runner {
 			"share": "source",
 		},
 		[]string{},
-		[]string{"source"},
+		[]string{},
 		cacheOptsValidator,
 	)
 	if err != nil {

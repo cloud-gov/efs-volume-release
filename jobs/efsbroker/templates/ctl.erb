@@ -24,7 +24,7 @@ case $1 in
     chown -R vcap:vcap "<%= p("efsbroker.data-dir") %>"
 
     echo $$ > $PIDFILE
-
+    allowed_options='Err,MountAZs,MountId,MountStates,service_id,FsState,MountPermsSet,plan_id,MountIps,organization_guid,space_guid,EfsId,MountIds,MountIp,MountState'
     export AWS_REGION='<%= p("efsbroker.aws-region") %>'
     <% if_p("efsbroker.aws-access-key-id") do |access_key| %>export AWS_ACCESS_KEY_ID='<%= access_key %>'<% end %>
     <% if_p("efsbroker.aws-secret-access-key") do |secret_key| %>export AWS_SECRET_ACCESS_KEY='<%= secret_key %>'<% end %>
@@ -52,6 +52,7 @@ case $1 in
       --awsAZs="<%= p("efsbroker.aws-azs") %>" \
       --logLevel="debug" \
       --timeFormat="<%= p("efsbroker.log_time_format") %>" \
+      --allowedOptions="<%= allowed_options %>" \
       2> >(tee -a $LOG_DIR/efsbroker.stderr.log | logger -p user.error -t vcap.efsbroker) \
       1> >(tee -a $LOG_DIR/efsbroker.stdout.log | logger -p user.info -t vcap.efsbroker)
     ;;
