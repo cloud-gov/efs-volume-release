@@ -1,7 +1,6 @@
 package existingvolumebroker
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -157,13 +156,13 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	defer logger.Info("end")
 	var configuration map[string]interface{}
 
-	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
-	logger.Info("decoder", lager.Data{"decorder": decoder})
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		logger.Info("decode error", lager.Data{"error": err})
-		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
-	}
+	// var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
+	// logger.Info("decoder", lager.Data{"decorder": decoder})
+	// err := decoder.Decode(&configuration)
+	// if err != nil {
+	// 	logger.Info("decode error", lager.Data{"error": err})
+	// 	return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
+	// }
 
 	share := stringifyShare(configuration[SHARE_KEY])
 	if share == "" {
@@ -206,7 +205,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		return domain.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 	}
 
-	err = b.store.CreateInstanceDetails(instanceID, instanceDetails)
+	err := b.store.CreateInstanceDetails(instanceID, instanceDetails)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
