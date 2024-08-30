@@ -13,7 +13,7 @@ import (
 )
 
 func NewHandler(logger lager.Logger, client driveradmin.DriverAdmin) (http.Handler, error) {
-	logger = logger.Session("server")
+	logger = logger.Session("server-driver")
 	logger.Info("start")
 	defer logger.Info("end")
 

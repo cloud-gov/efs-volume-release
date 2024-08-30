@@ -73,7 +73,7 @@ const (
 )
 
 func NewHandler(logger lager.Logger, client dockerdriver.Driver) (http.Handler, error) {
-	logger = logger.Session("server")
+	logger = logger.Session("server-dockerdriver")
 	logger.Info("start")
 	defer logger.Info("end")
 
@@ -203,7 +203,7 @@ func newCapabilitiesHandler(logger lager.Logger, client dockerdriver.Driver) htt
 
 func newCreateHandler(logger lager.Logger, client dockerdriver.Driver) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		logger := logger.Session("handle-create")
+		logger := logger.Session("handle-create-docker")
 		logger.Info("start")
 		defer logger.Info("end")
 

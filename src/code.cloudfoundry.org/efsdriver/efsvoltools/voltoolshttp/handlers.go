@@ -13,7 +13,7 @@ import (
 )
 
 func NewHandler(logger lager.Logger, client efsvoltools.VolTools) (http.Handler, error) {
-	logger = logger.Session("server")
+	logger = logger.Session("server-voltools")
 	logger.Info("start")
 	defer logger.Info("end")
 
