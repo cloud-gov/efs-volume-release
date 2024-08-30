@@ -1,3 +1,7 @@
+blobs/nfs-debs/util-linux-2.40.1.tar.gz:
+  size: 19413328
+  object_id: f519f338-4bb3-40d0-5c1d-d7b6b1bdd084
+  sha: sha256:8e396eececae2b3b68db232c33b8810faa7c31f6df19f98f512739293d5829b7
 nfs-debs/keyutils_1.5.9-8ubuntu1_amd64.deb:
   size: 47054
   object_id: e253a610-93a7-458c-6bc7-7ceea8eddb1f
@@ -6,10 +10,18 @@ nfs-debs/libevent-2.0-5_2.0.21-stable-2ubuntu0.16.04.1_amd64.deb:
   size: 114014
   object_id: 53800820-7bdc-4b81-50b6-bf098b342c75
   sha: sha256:e1acdffde386a4da7de46166ffd199771a13498f5d4fc38d61b3fa0eba305572
+nfs-debs/libevent-2.1.12-stable.tar.gz:
+  size: 1100847
+  object_id: ec1d2142-74d8-482f-635c-923c57b986b2
+  sha: sha256:92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb
 nfs-debs/libnfsidmap2_0.25-5_amd64.deb:
   size: 32182
   object_id: b6b86ce6-94bb-4ebb-7eae-2fdb6333d681
   sha: sha256:ed00ae6b3efc4c28068e5f984d8c69942c68502593da945b89b0045e7fcef396
+nfs-debs/libtirpc-1.3.4.tar.bz2:
+  size: 563292
+  object_id: d232a702-240f-413c-4aaa-a3f283572cd6
+  sha: sha256:1e0b0c7231c5fa122e06c0609a76723664d068b0dba3b8219b63e6340b347860
 nfs-debs/nfs-common_1%3a1.2.8-9ubuntu12.1_amd64.deb:
   size: 184334
   object_id: fd47c6a3-90c5-45b0-7572-40d7adc78d64
@@ -26,3 +38,7 @@ nfs-debs/rpcbind_0.2.3-0.2_amd64.deb:
   size: 40252
   object_id: e331ee86-8eff-4cc2-7705-dc9dfdec2fbf
   sha: sha256:7c9d1aca35cd01ef0c9cbc90f93e993116e84de1967c429e1130a16281fd3a6e
+nfs-debs/rpcsvc-proto-1.4.4.tar.xz:
+  size: 168648
+  object_id: ddd2e1c1-ffa4-4e4e-735c-b43229db98bf
+  sha: sha256:81c3aa27edb5d8a18ef027081ebb984234d5b5860c65bd99d4ac8f03145a558b

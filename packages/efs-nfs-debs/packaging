@@ -7,9 +7,62 @@ cp -a ${BOSH_COMPILE_TARGET}/nfs-debs/*.deb ${BOSH_INSTALL_TARGET}/
 #extract all the things
 
 pushd ${BOSH_COMPILE_TARGET}
-  #ls nfs-debs/*.tar.gz | xargs -n1 tar -xzf
+  ls nfs-debs/*.tar.gz | xargs -n1 tar -xzf
   ls nfs-debs/*.tar.bz2 | xargs -n1 tar -xjf
   #ls nfs-debs/*.tar.xz | xargs -n1 tar -xf
+popd
+
+# libevent
+pushd ${BOSH_COMPILE_TARGET}/libevent-*-stable/
+  # no binary 'python' on $PATH, but python3 is available
+  sed -i 's/python/&3/' event_rpcgen.py
+  ./configure --prefix=${BOSH_INSTALL_TARGET} --disable-static
+  make
+  make install
+popd
+echo "LIBEVENT done"
+# rpcsvc-proto
+pushd ${BOSH_COMPILE_TARGET}/rpcsvc-proto-*/
+  ./configure --prefix=${BOSH_INSTALL_TARGET} --sysconfdir=${BOSH_INSTALL_TARGET}/etc
+  make
+  make install
+popd
+echo "RPCSVC done"
+
+#libtirpc
+pushd  ${BOSH_COMPILE_TARGET}/libtirpc-*/
+  ./configure --prefix=${BOSH_INSTALL_TARGET} \
+              --sysconfdir=${BOSH_INSTALL_TARGET}/etc \
+              --disable-static \
+              --disable-gssapi
+  make
+  make install
+popd
+echo "LIBTIRPC done"
+
+#linux-utils
+
+pushd ${BOSH_COMPILE_TARGET}/util-linux-*/
+
+  ./configure   \
+    --prefix=${BOSH_INSTALL_TARGET}   \
+    --libdir=${BOSH_INSTALL_TARGET}/lib   \
+    --sysconfdir=${BOSH_INSTALL_TARGET}/etc   \
+    --localstatedir=${BOSH_INSTALL_TARGET}/var   \
+    --mandir=${BOSH_INSTALL_TARGET}/man   \
+    --infodir=${BOSH_INSTALL_TARGET}/info   \
+    --docdir=${BOSH_INSTALL_TARGET}/doc/util-linux   \
+    --enable-libblkid   \
+    --enable-libmount   \
+    --enable-libuuid   \
+    --enable-blkid   \
+    --enable-mount   \
+    --enable-uuid \
+    --enable-shared   \
+    --disable-all-programs   \
+    --without-python
+    make
+    make install
 popd
 
 # rpc-bind ( required for some nfsv3 mounts to work
