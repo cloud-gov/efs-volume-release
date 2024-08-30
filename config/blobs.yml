@@ -1,4 +1,4 @@
-blobs/nfs-debs/util-linux-2.40.1.tar.gz:
+nfs-debs/util-linux-2.40.1.tar.gz:
   size: 19413328
   object_id: f519f338-4bb3-40d0-5c1d-d7b6b1bdd084
   sha: sha256:8e396eececae2b3b68db232c33b8810faa7c31f6df19f98f512739293d5829b7
