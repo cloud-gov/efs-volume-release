@@ -158,8 +158,10 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	var configuration map[string]interface{}
 
 	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
+	logger.Info("decoder", lager.Data{"decorder": decoder})
 	err := decoder.Decode(&configuration)
 	if err != nil {
+		logger.Info("decode error", lager.Data{"error": err})
 		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
 	}
 
