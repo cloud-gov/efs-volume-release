@@ -70,7 +70,7 @@ func (d *VolumeDriver) Activate(env dockerdriver.Env) dockerdriver.ActivateRespo
 
 func (d *VolumeDriver) Create(env dockerdriver.Env, createRequest dockerdriver.CreateRequest) dockerdriver.ErrorResponse {
 	logger := env.Logger().Session("create")
-	logger.Info("start")
+	logger.Info("start", lager.Data{"opts": createRequest.Opts})
 	defer logger.Info("end")
 
 	if createRequest.Name == "" {
