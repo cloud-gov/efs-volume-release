@@ -2,6 +2,8 @@ module code.cloudfoundry.org/efsdriver
 
 go 1.22.6
 
+replace code.cloudfoundry.org/volumedriver v0.96.0 => ../volumedriver
+
 require (
 	code.cloudfoundry.org/cfhttp v2.0.0+incompatible
 	code.cloudfoundry.org/clock v1.2.0
@@ -9,6 +11,7 @@ require (
 	code.cloudfoundry.org/dockerdriver v0.0.0-20240620154825-441e44b5dbb3
 	code.cloudfoundry.org/goshims v0.38.0
 	code.cloudfoundry.org/lager/v3 v3.0.3
+	code.cloudfoundry.org/tlsconfig v0.0.0-20240522170710-79df114af82a
 	code.cloudfoundry.org/volume-mount-options v0.95.0
 	code.cloudfoundry.org/volumedriver v0.96.0
 	github.com/onsi/ginkgo v1.16.5
@@ -21,7 +24,6 @@ require (
 
 require (
 	code.cloudfoundry.org/cfhttp/v2 v2.1.0 // indirect
-	code.cloudfoundry.org/tlsconfig v0.0.0-20240522170710-79df114af82a // indirect
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
