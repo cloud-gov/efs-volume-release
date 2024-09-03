@@ -349,7 +349,7 @@ func (d *VolumeDriver) mountPath(env dockerdriver.Env, volumeId string) string {
 }
 
 func (d *VolumeDriver) mount(env dockerdriver.Env, opts map[string]interface{}, mountPath string) error {
-	source, sourceOk := Opts["ip"].(string)
+	source, sourceOk := opts["ip"].(string)
 	logger := env.Logger().Session("mount", lager.Data{"source": source, "target": mountPath})
 	logger.Info("start")
 	defer logger.Info("end")
