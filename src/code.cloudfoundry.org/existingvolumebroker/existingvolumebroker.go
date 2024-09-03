@@ -1,7 +1,6 @@
 package existingvolumebroker
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -156,23 +155,23 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	logger.Info("start")
 	defer logger.Info("end")
 
-	var configuration map[string]interface{}
-	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
-	logger.Info("decoder", lager.Data{"decorder": decoder})
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		logger.Info("decode error", lager.Data{"error": err})
-		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
-	}
+	// var configuration map[string]interface{}
+	// var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
+	// logger.Info("decoder", lager.Data{"decorder": decoder})
+	// err := decoder.Decode(&configuration)
+	// if err != nil {
+	// 	logger.Info("decode error", lager.Data{"error": err})
+	// 	return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
+	// }
 
-	share := stringifyShare(configuration[SHARE_KEY])
-	if share == "" {
-		return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
-	}
+	// share := stringifyShare(configuration[SHARE_KEY])
+	// if share == "" {
+	// 	return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
+	// }
 
-	if _, ok := configuration[SOURCE_KEY]; ok {
-		return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
-	}
+	// if _, ok := configuration[SOURCE_KEY]; ok {
+	// 	return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
+	// }
 	if b.isNFSBroker() {
 		re := regexp.MustCompile("^[^/]+:/")
 		match := re.MatchString(share)
@@ -191,6 +190,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		}
 	}()
 
+	//efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
 	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
 	go operation.Execute()
 	instanceDetails := brokerstore.ServiceInstance{
@@ -198,14 +198,14 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		PlanID:             details.PlanID,
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
-		ServiceFingerPrint: configuration,
+		ServiceFingerPrint: operation,
 	}
 
 	if b.instanceConflicts(instanceDetails, instanceID) {
 		return domain.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 	}
 
-	err = b.store.CreateInstanceDetails(instanceID, instanceDetails)
+	err := b.store.CreateInstanceDetails(instanceID, instanceDetails)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
