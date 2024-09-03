@@ -191,7 +191,6 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		}
 	}()
 
-	efsInstance := EFSInstance{details, "", "", "", "", false, "", []string{}, []string{}, []string{}, []string{}, nil}
 	operation := b.ProvisionOperation(logger, instanceID, details, b.efsService, b.subnets, b.clock, b.ProvisionEvent)
 	go operation.Execute()
 	instanceDetails := brokerstore.ServiceInstance{
@@ -199,7 +198,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		PlanID:             details.PlanID,
 		OrganizationGUID:   details.OrganizationGUID,
 		SpaceGUID:          details.SpaceGUID,
-		ServiceFingerPrint: efsInstance,
+		ServiceFingerPrint: configuration,
 	}
 
 	if b.instanceConflicts(instanceDetails, instanceID) {
