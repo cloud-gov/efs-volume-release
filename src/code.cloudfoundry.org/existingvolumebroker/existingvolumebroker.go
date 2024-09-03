@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"regexp"
 	"sync"
 
 	"code.cloudfoundry.org/clock"
@@ -172,14 +171,14 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	// if _, ok := configuration[SOURCE_KEY]; ok {
 	// 	return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
 	// }
-	if b.isNFSBroker() {
-		re := regexp.MustCompile("^[^/]+:/")
-		match := re.MatchString(share)
+	// if b.isNFSBroker() {
+	// 	re := regexp.MustCompile("^[^/]+:/")
+	// 	match := re.MatchString(share)
 
-		if match {
-			return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
-		}
-	}
+	// 	if match {
+	// 		return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
+	// 	}
+	// }
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
