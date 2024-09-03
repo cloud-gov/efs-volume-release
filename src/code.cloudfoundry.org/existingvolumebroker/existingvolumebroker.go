@@ -1,6 +1,7 @@
 package existingvolumebroker
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"regexp"
 	"sync"
 
 	"code.cloudfoundry.org/clock"
@@ -153,32 +155,32 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 	logger := b.logger.Session("provision").WithData(lager.Data{"instanceID": instanceID, "details": details})
 	logger.Info("start")
 	defer logger.Info("end")
-	// var configuration map[string]interface{}
 
-	// var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
-	// logger.Info("decoder", lager.Data{"decorder": decoder})
-	// err := decoder.Decode(&configuration)
-	// if err != nil {
-	// 	logger.Info("decode error", lager.Data{"error": err})
-	// 	return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
-	// }
+	var configuration map[string]interface{}
+	var decoder = json.NewDecoder(bytes.NewBuffer(details.RawParameters))
+	logger.Info("decoder", lager.Data{"decorder": decoder})
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		logger.Info("decode error", lager.Data{"error": err})
+		return domain.ProvisionedServiceSpec{}, apiresponses.ErrRawParamsInvalid
+	}
 
-	// share := stringifyShare(configuration[SHARE_KEY])
-	// if share == "" {
-	// 	return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
-	// }
+	share := stringifyShare(configuration[SHARE_KEY])
+	if share == "" {
+		return domain.ProvisionedServiceSpec{}, errors.New("config requires a \"share\" key")
+	}
 
-	// if _, ok := configuration[SOURCE_KEY]; ok {
-	// 	return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
-	// }
-	// if b.isNFSBroker() {
-	// 	re := regexp.MustCompile("^[^/]+:/")
-	// 	match := re.MatchString(share)
+	if _, ok := configuration[SOURCE_KEY]; ok {
+		return domain.ProvisionedServiceSpec{}, errors.New("create configuration contains the following invalid option: ['" + SOURCE_KEY + "']")
+	}
+	if b.isNFSBroker() {
+		re := regexp.MustCompile("^[^/]+:/")
+		match := re.MatchString(share)
 
-	// 	if match {
-	// 		return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
-	// 	}
-	// }
+		if match {
+			return domain.ProvisionedServiceSpec{}, errors.New("syntax error for share: no colon allowed after server")
+		}
+	}
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -204,7 +206,7 @@ func (b *Broker) Provision(context context.Context, instanceID string, details d
 		return domain.ProvisionedServiceSpec{}, apiresponses.ErrInstanceAlreadyExists
 	}
 
-	err := b.store.CreateInstanceDetails(instanceID, instanceDetails)
+	err = b.store.CreateInstanceDetails(instanceID, instanceDetails)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("failed to store instance details: %s", err.Error())
 	}
@@ -284,11 +286,6 @@ func (b *Broker) Bind(context context.Context, instanceID string, bindingID stri
 		}
 	}
 	mode := evaluateMode(params)
-
-	// efsopts, err := getFingerprint(instanceDetails.ServiceFingerPrint)
-	// if err != nil {
-	// 	return domain.Binding{}, err
-	// }
 
 	opts, err := getFingerprintexisting(instanceDetails.ServiceFingerPrint)
 	if err != nil {
